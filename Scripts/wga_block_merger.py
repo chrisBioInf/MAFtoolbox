@@ -235,7 +235,7 @@ def merge_blocks(block1, block2):
         merged_records.append(record_)
     merged_records = fill_bridges_with_gaps(merged_records)
     matrix = filter_by_pairwise_id(merged_records)
-    df = print_similarity_matrix(matrix, merged_records)
+    # df = print_similarity_matrix(matrix, merged_records)
     record_dict = {str(record.id) : record for record in merged_records}
     
     return merged_records
