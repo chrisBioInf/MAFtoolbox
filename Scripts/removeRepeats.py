@@ -8,9 +8,8 @@ Created on Thu Jun 29 13:04:01 2023
 
 
 import sys
-from copy import copy
+from copy import deepcopy, copy
 import numpy as np
-from difflib import SequenceMatcher
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
@@ -69,12 +68,17 @@ def slice_alignments(alignment, index_pairs, min_length=50):
         if (b -a) < min_length:
             continue
         for record in alignment:
-            current_record = copy(record)
+            current_record = deepcopy(record)
             current_record.seq = Seq(str(record.seq)[a:b])
+            seq_ungapped = current_record.seq.replace('-', '')
+            
+            length_subseq = len(seq_ungapped)
+            length_previous_seq = len(str(record.seq)[:a].replace('-', ''))
+            
             if str(current_record.seq).count("-") / (b -a) > max_gap_fraction:
                 continue
-            current_record.annotations["start"] =  record.annotations["start"] + a
-            current_record.annotations["size"] = b -a
+            current_record.annotations["start"] =  record.annotations["start"] + length_previous_seq
+            current_record.annotations["size"] = length_subseq
             records_.append(current_record)
         
         if len(records_) < 2:
@@ -86,13 +90,6 @@ def slice_alignments(alignment, index_pairs, min_length=50):
     
     return result_alignments
         
-        
-def check_mask(char_, ignore_masks):
-    if ignore_masks: 
-        return True
-    if char_.islower():
-        return False
-
 
 def screen_for_gaps(matrix, min_gap_length=5, ignore_masks=False):
     i = 0
@@ -127,7 +124,6 @@ def screen_for_gaps(matrix, min_gap_length=5, ignore_masks=False):
                 break
         i += 1
 
-    print(index_pairs_to_cut)
     return index_pairs_to_cut
     
     

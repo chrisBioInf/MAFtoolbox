@@ -12,6 +12,7 @@ import numpy as np
 from difflib import SequenceMatcher
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
+from Bio.Seq import Seq
 
 
 ignore_masks = True
@@ -32,6 +33,10 @@ def read_maf(filename):
     return handle
 
 
+def write_maf(records, filename):
+    AlignIO.write(records, open(filename, 'w'), format='maf')
+
+
 def print_alignment_simple(alignment):
     ref_record = alignment[0]
     print("\nAlignment:  %s    %s  " % (ref_record.id, ref_record.annotations["start"]))
@@ -39,8 +44,26 @@ def print_alignment_simple(alignment):
         print("%s: \t %s" % (record.id, record.seq))
         
         
-def remove_consensus_gaps(alignment):
-    pass
+def eliminate_consensus_gaps(records):
+    ungapped_seqs = []
+    for i in range(0, len(records)):
+        seq = str(records[i].seq)
+        seq_ = ""
+        for c in range(0, len(seq)):
+            if seq[c] != "-":
+                seq_ = seq_ + seq[c]
+                continue
+            for j in range(0, len(records)):
+                seq_2 = str(records[j].seq)
+                if seq_2[c] != "-":
+                    seq_ = seq_ + seq[c]
+                    break
+        ungapped_seqs.append(seq_)
+    
+    for i in range(0, len(records)):
+        records[i].seq = Seq(ungapped_seqs[i])
+    
+    return records
 
 
 def calculate_consensus_sequence(records):
@@ -76,9 +99,7 @@ def filter_records_by_similarity(alignment):
     
     while not alignment_finalized:
         consensus_seq = calculate_consensus_sequence(current_records)
-        print(consensus_seq)
         gap_fraction = consensus_seq.count('-') / length
-        print(gap_fraction)
         
         if gap_fraction > max_gaps:
             alignment_discarded = True
@@ -97,6 +118,8 @@ def filter_records_by_similarity(alignment):
             
         if np.mean(similarity_column) > id_threshold:
             alignment_finalized = True
+            
+        current_records = eliminate_consensus_gaps(current_records)
         
     if alignment_discarded:
         return MultipleSeqAlignment([alignment[0]])
@@ -106,10 +129,17 @@ def filter_records_by_similarity(alignment):
 
 def main():
     input_ = sys.argv[1]
+    output_ = sys.argv[2]
     handle = read_maf(input_)
+    output_alignments = []
     
     for alignment in handle:
         alignment = filter_records_by_similarity(alignment)
-        print_alignment_simple(alignment)
+        if len(alignment) > 1:
+            print_alignment_simple(alignment)
+            output_alignments.append(alignment)
+    
+    write_maf(output_alignments, output_)
+    
     
 main()

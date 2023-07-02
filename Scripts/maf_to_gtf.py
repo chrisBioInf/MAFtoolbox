@@ -27,7 +27,7 @@ def maf_to_gtf(fs):
     if "window" in fs:
         this_source = "rnazWindow"
     else:
-        this_source = "Multitz"
+        this_source = "MAF"
     
     handle = AlignIO.parse(handle=open(filename, 'r'), format="maf")
     count = 0
