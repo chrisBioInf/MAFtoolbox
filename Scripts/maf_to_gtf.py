@@ -7,11 +7,16 @@ Created on Thu Feb  9 09:03:11 2023
 """
 
 import pandas as pd
+from optparse import OptionParser
 from Bio import AlignIO
 import sys
 
 
-def maf_to_gtf(fs):
+
+usage = "\n%prog  [options]"
+__version__ = "1.0"
+
+def maf_to_gtf(fs, trim_name=False):
     seqname = []
     source = []
     type_ = []
@@ -35,7 +40,11 @@ def maf_to_gtf(fs):
     for alignment in handle:
         count += 1
         record = alignment[0]
-        seqname.append(str(record.id))
+        
+        if trim_name == True:
+            seqname.append(str(record.id).split(".")[1] + ".1")
+        else:
+            seqname.append(str(record.id))
         source.append(this_source)
         type_.append("alignment_block")
         starts.append(record.annotations.get("start"))
@@ -46,20 +55,27 @@ def maf_to_gtf(fs):
         descriptor.append("Continuously aligned block %s" % count)
         
     
-    with open("%s.gtf" % fs, 'w') as f:
+    if fs.endswith(".maf"):
+        outfile = fs.replace(".maf", ".gtf")
+    else:
+        outfile = fs + ".gtf"
+    
+    with open(outfile, 'w') as f:
         for i in range(0, len(seqname)):
             line = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
                 seqname[i], source[i], type_[i], starts[i], ends[i], 
                 score[i], strands[i], frame[i], descriptor[i]
                 )
-            print(line)
             f.write(line + "\n")
 
 
 def main():
-    filenames = sys.argv[1:]
-    for fs in filenames:
-        maf_to_gtf(fs)
+    parser = OptionParser(usage,version="%prog " + __version__)
+    parser.add_option("-i","--input",action="store",type="string", dest="in_file",help="The (MAF) input file (Required).")
+    parser.add_option("-t", "--trim", action="store", default=False, dest="trim", help="If sequence names should be split by seperator. Default: false")
+    options, args = parser.parse_args()
+    
+    maf_to_gtf(options.in_file, trim_name=options.trim)
     
 
 if __name__ == "__main__":
