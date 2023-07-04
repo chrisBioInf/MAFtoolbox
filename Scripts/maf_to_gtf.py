@@ -12,7 +12,6 @@ from Bio import AlignIO
 import sys
 
 
-
 usage = "\n%prog  [options]"
 __version__ = "1.0"
 
@@ -41,7 +40,7 @@ def maf_to_gtf(fs, trim_name=False):
         count += 1
         record = alignment[0]
         
-        if trim_name == True:
+        if trim_name:
             seqname.append(str(record.id).split(".")[1] + ".1")
         else:
             seqname.append(str(record.id))

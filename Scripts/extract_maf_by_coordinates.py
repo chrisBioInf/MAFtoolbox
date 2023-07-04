@@ -33,9 +33,7 @@ def extract_blocks(maf_file, annotations):
     handle = AlignIO.parse(open(maf_file, 'r'), format="maf")
     annotation_index = 0
     
-    annotation_name = annotations["sequence"].iloc[annotation_index]
-    annotation_start = annotations["start"].iloc[annotation_index]
-    annotation_end = annotations["end"].iloc[annotation_index]
+    annotations["annotation_key"] = annotations['sequence'] + '_' + annotations['start'].astype(str) + '_' + annotations['end'].astype(str) 
     
     for alignment in handle:
         ref_seq = alignment[0]
@@ -43,18 +41,12 @@ def extract_blocks(maf_file, annotations):
         # alignment[0].id = name
         start = int(ref_seq.annotations["start"])
         end = start + int(ref_seq.annotations["size"])
+        key = "%s_%s_%s" % (name, start, end)
         
-        if (name == annotation_name) and (start == annotation_start) and (end == annotation_end):
+        if key in list(annotations['annotation_key']):
             print(alignment)
             extracted_blocks.append(alignment)
-            annotation_index += 1
-            annotation_name = annotations["sequence"].iloc[annotation_index]
-            annotation_start = annotations["start"].iloc[annotation_index]
-            annotation_end = annotations["end"].iloc[annotation_index]
             
-            if annotation_index > len(annotations):
-                break
-    
     return extracted_blocks
 
 
