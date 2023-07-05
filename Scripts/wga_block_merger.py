@@ -9,6 +9,7 @@ Created on Tue Mar 14 09:52:16 2023
 
 import sys
 import os
+from optparse import OptionParser
 from Bio import AlignIO, Seq
 from Bio.Align import MultipleSeqAlignment
 import numpy as np
@@ -25,11 +26,6 @@ if THIS_DIR not in sys.path:
 
 from maf_to_gtf import maf_to_gtf
 
-
-alignment_file = sys.argv[1]
-block_length_threshold = 1000
-species_consensus_threshold = 0.75
-block_distance_threshold = 0
 offset_threshold = 0
 
 
@@ -39,7 +35,7 @@ def print_alignment_simple(records):
         print(str(records[i].seq))
 
 
-def plot_merge_summary(records, merged_records, merged_blocks_n):
+def plot_merge_summary(records, merged_records, merged_blocks_n, alignment_file, block_length_threshold):
     lengths = []
     blocks = []
     seq_ns = []
@@ -94,8 +90,10 @@ def load_alignment_file(filename):
 
 
 def write_alignments(alignments, filename):
+    if not filename.endswith(".maf"):
+        filename = filename + ".maf"
     AlignIO.write([MultipleSeqAlignment(records=records) for records in alignments], 
-                  handle=open(filename + ".merged", 'w'), 
+                  handle=open(filename, 'w'), 
                   format="maf")
 
 
@@ -191,13 +189,19 @@ def filter_by_pairwise_id(records):
     return matrix
 
 
-def filter_by_seq_length(records):
+def filter_by_seq_length(records, reference=True):
     length_dict = {str(record.id) : len(record.seq.replace('-', '')) for record in records}
     record_dict = {str(record.id) : record for record in records}
     mu = np.mean([x for x in length_dict.values()])
     std = np.std([x for x in length_dict.values()])
     
+    count = 0
+    
     for record in records:
+        count += 1
+        if (count == 1) and reference:
+            continue
+        
         x = str(record.id)
         if std > 0:
             z = abs(length_dict.get(x) - mu) / std
@@ -209,7 +213,7 @@ def filter_by_seq_length(records):
     return [record for record in record_dict.values()]
 
 
-def merge_blocks(block1, block2):
+def merge_blocks(block1, block2, reference=True):
     block1_ids = [str(record.id) for record in block1]
     block2_ids = [str(record.id) for record in block2]
     
@@ -228,20 +232,22 @@ def merge_blocks(block1, block2):
         start1, end1 = record_.annotations["start"], record_.annotations["start"] + record_.annotations["size"]
         start2, end2 = record2.annotations["start"], record2.annotations["start"] + record2.annotations["size"]
         offset = coordinate_distance(end1, start2)
-        if (offset > offset_threshold) or (strand1 != strand2):
+        if ((offset > offset_threshold) or (strand1 != strand2)):
             continue
         record_.seq = concat_with_bridge(record_.seq, record2.seq, offset)
         record_.annotations["size"] = (end1 - start1) + offset + (end2 - start2)
         merged_records.append(record_)
+        
     merged_records = fill_bridges_with_gaps(merged_records)
-    matrix = filter_by_pairwise_id(merged_records)
+    merged_records = filter_by_seq_length(merged_records, reference)
+    # matrix = filter_by_pairwise_id(merged_records)
     # df = print_similarity_matrix(matrix, merged_records)
     record_dict = {str(record.id) : record for record in merged_records}
     
     return merged_records
 
 
-def check_block_viability(block1, block2):
+def check_block_viability(block1, block2, species_consensus_threshold, block_distance_threshold, block_length_threshold):
     merge_flag = True
     reference1 = block1[0]
     reference2 = block2[0]
@@ -263,26 +269,35 @@ def check_block_viability(block1, block2):
 
 
 def main():
-    alignments = load_alignment_file(alignment_file)
+    parser = OptionParser(usage="wga_block_merger.py",version="%prog 0.1" )
+    parser.add_option("-m","--maf",action="store",type="string", dest="in_file",help="The (MAF) input file (Required).")
+    parser.add_option("-o", "--output", action="store", type="string", dest="out_file", help="Output destination (file).")
+    parser.add_option("-r", "--reference", action="store", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True).")
+    parser.add_option("-s", "--species-consensus", action="store", type="float", default=0.75, dest="species_consensus", help="Minimal consensus between neighboring blocks for merging (Default: 0.75).")
+    parser.add_option("-d", "--max-distance", action="store", default=0, type="int", dest="distance", help="Maximum distance between genomic coordinates of sequences for merging of neighboring blocks? (Default: 0).")
+    parser.add_option("-l", "--max-length", action="store", default=1000, type="int", dest="length", help="Merged alignment blocks will ot be extended past this block length (Default: 1000).")
+    options, args = parser.parse_args()
+    alignments = load_alignment_file(options.in_file)
     merged_alignments = []
     i = 0
     block1 = alignments[0]
     merged_blocks_n = []
     local_merges = 1
-    
     length = len(alignments)
     
     while i < length-1:
         print("Scan MAF block: %s / %s" % (i+1, length))
         block2 = alignments[i+1]
-        merge_flag = check_block_viability(block1, block2)
-        
+        merge_flag = check_block_viability(block1, block2, 
+                                           options.species_consensus,
+                                           options.distance,
+                                           options.length)
         if merge_flag == True: 
-            block1 = merge_blocks(block1, block2)
+            block1 = merge_blocks(block1, block2, options.reference)
             local_merges += 1
             i += 1
         else:
-            records = filter_by_seq_length(block1)
+            records = filter_by_seq_length(block1, options.reference)
             records = eliminate_consensus_gaps(records)
             merged_alignments.append(records)
             merged_blocks_n.append(local_merges)
@@ -293,9 +308,8 @@ def main():
     if merge_flag == False:
         merged_alignments.append(eliminate_consensus_gaps(filter_by_seq_length(alignments[-1])))
             
-            
-    plot_merge_summary(alignments, merged_alignments, merged_blocks_n)
-    write_alignments(merged_alignments, alignment_file)
+    plot_merge_summary(alignments, merged_alignments, merged_blocks_n, options.in_file, options.length)
+    write_alignments(merged_alignments, options.out_file)
     
 
 if __name__ == "__main__":
