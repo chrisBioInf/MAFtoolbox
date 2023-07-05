@@ -26,8 +26,6 @@ if THIS_DIR not in sys.path:
 
 from maf_to_gtf import maf_to_gtf
 
-offset_threshold = 0
-
 
 def print_alignment_simple(records):
     for i in range(0, len(records)):
@@ -116,52 +114,26 @@ def local_species_consensus(block1, block2):
     return consensus_score
 
 
-def concat_with_bridge(seq1, seq2, offset):
-    seq_ = Seq.Seq(str(seq1) + "N"*offset + str(seq2)) 
+def concat_with_bridge(seq1, seq2, offset, max_offset):
+    n_gaps = max_offset - offset
+    seq_ = Seq.Seq(str(seq1) + "N"*offset + '-'*n_gaps + str(seq2)) 
     return seq_
-
-
-def fill_bridges_with_gaps(records):
-    length_dict = {}
-    seq_dict = {}
-    for i in range(0, len(records)):
-        length_dict[str(records[i].id)] = len(records[i].seq)
-        seq_dict[str(records[i].id)] = str(records[i].seq)
-    longest_seq_key = max(length_dict, key=length_dict.get)
-    longest_seq = seq_dict.get(longest_seq_key)
-    max_length = length_dict.get(longest_seq)
-    
-    for i in range(0, len(records)):
-        if len(records[i].seq) == max_length:
-            continue
-        seq = str(records[i].seq)
-        seq_ = ""
-        j = 0
-        
-        for n in range(0, len(longest_seq)):
-            if longest_seq[n] != "N":
-                seq_ = seq_ + seq[j]
-                j += 1
-            else:
-                seq_ = seq_ + "-"
-        records[i].seq = Seq.Seq(seq_)
-    
-    return records
 
 
 def eliminate_consensus_gaps(records):
     ungapped_seqs = []
+    print(str(records[0].seq))
+    seq_matrix = np.array([list(record.seq) for record in records])
     for i in range(0, len(records)):
         seq = str(records[i].seq)
         seq_ = ""
-        for c in range(0, len(seq)):
-            if seq[c] != "-":
-                seq_ = seq_ + seq[c]
+        for c in range(0, len(seq_matrix[i])):
+            if seq_matrix[i][c] != "-":
+                seq_ = seq_ + seq_matrix[i][c]
                 continue
-            for j in range(0, len(records)):
-                seq_2 = str(records[j].seq)
-                if seq_2[c] != "-":
-                    seq_ = seq_ + seq[c]
+            for j in range(0, len(seq_matrix)):
+                if seq_matrix[j][c] != "-":
+                    seq_ = seq_ + seq_matrix[i][c]
                     break
         ungapped_seqs.append(seq_)
     
@@ -213,7 +185,7 @@ def filter_by_seq_length(records, reference=True):
     return [record for record in record_dict.values()]
 
 
-def merge_blocks(block1, block2, reference=True):
+def merge_blocks(block1, block2, reference=True, offset_threshold=0):
     block1_ids = [str(record.id) for record in block1]
     block2_ids = [str(record.id) for record in block2]
     
@@ -225,25 +197,26 @@ def merge_blocks(block1, block2, reference=True):
     block1_records = [record for record in block1 if record.id in consensus_blocks]
     block2_records = [record for record in block2 if record.id in consensus_blocks]
     merged_records = []
+    offsets = []
+    
+    for i in range(0, len(block1_records)):
+        offsets.append( coordinate_distance(block1_records[i].annotations["start"] + block1_records[i].annotations["size"]
+                                            ,block2_records[i].annotations["start"] ))
+    max_offset = max(offsets)
     
     for i in range(0, len(block1_records)):
         record_, record2 = block1_records[i], block2_records[i]
         strand1, strand2 = record_.annotations["strand"], record2.annotations["strand"]
         start1, end1 = record_.annotations["start"], record_.annotations["start"] + record_.annotations["size"]
         start2, end2 = record2.annotations["start"], record2.annotations["start"] + record2.annotations["size"]
-        offset = coordinate_distance(end1, start2)
+        offset = offsets[i]  # coordinate_distance(end1, start2)
         if ((offset > offset_threshold) or (strand1 != strand2)):
             continue
-        record_.seq = concat_with_bridge(record_.seq, record2.seq, offset)
+        record_.seq = concat_with_bridge(record_.seq, record2.seq, offset, max_offset)
         record_.annotations["size"] = (end1 - start1) + offset + (end2 - start2)
         merged_records.append(record_)
-        
-    merged_records = fill_bridges_with_gaps(merged_records)
-    merged_records = filter_by_seq_length(merged_records, reference)
-    # matrix = filter_by_pairwise_id(merged_records)
-    # df = print_similarity_matrix(matrix, merged_records)
-    record_dict = {str(record.id) : record for record in merged_records}
     
+    # matrix = filter_by_pairwise_id(merged_records)
     return merged_records
 
 
@@ -255,14 +228,19 @@ def check_block_viability(block1, block2, species_consensus_threshold, block_dis
     start2, end2 = reference2.annotations["start"], reference2.annotations["start"] + reference2.annotations["size"]
     
     if coordinate_distance(end1, start2) > block_distance_threshold:
+        print("Reason: Block distance")
         merge_flag = False
     elif reference1.annotations["strand"] != reference2.annotations["strand"]:
+        print("Reason: Divergent strandedness")
         merge_flag = False
     elif (len(reference1.seq) > block_length_threshold) or (len(reference2.seq) > block_length_threshold):
+        print("Reason: Length")
         merge_flag = False
     elif local_species_consensus(block1, block2) < species_consensus_threshold:
+        print("Reason: Low species consensus")
         merge_flag = False
     elif reference1.id != reference2.id:
+        print("Reason: Different reference ID")
         merge_flag = False
          
     return merge_flag
@@ -292,10 +270,17 @@ def main():
                                            options.species_consensus,
                                            options.distance,
                                            options.length)
+        print("Merge: %s" % merge_flag)
         if merge_flag == True: 
-            block1 = merge_blocks(block1, block2, options.reference)
+            block1 = merge_blocks(block1, block2, options.reference, 
+                                  offset_threshold=options.distance)
             local_merges += 1
             i += 1
+            if i == length-1:
+                records = filter_by_seq_length(block1, options.reference)
+                records = eliminate_consensus_gaps(records)
+                merged_alignments.append(records)
+                merged_blocks_n.append(local_merges)
         else:
             records = filter_by_seq_length(block1, options.reference)
             records = eliminate_consensus_gaps(records)
