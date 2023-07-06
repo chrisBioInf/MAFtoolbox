@@ -122,7 +122,6 @@ def concat_with_bridge(seq1, seq2, offset, max_offset):
 
 def eliminate_consensus_gaps(records):
     ungapped_seqs = []
-    print(str(records[0].seq))
     seq_matrix = np.array([list(record.seq) for record in records])
     for i in range(0, len(records)):
         seq = str(records[i].seq)
@@ -209,7 +208,7 @@ def merge_blocks(block1, block2, reference=True, offset_threshold=0):
         strand1, strand2 = record_.annotations["strand"], record2.annotations["strand"]
         start1, end1 = record_.annotations["start"], record_.annotations["start"] + record_.annotations["size"]
         start2, end2 = record2.annotations["start"], record2.annotations["start"] + record2.annotations["size"]
-        offset = offsets[i]  # coordinate_distance(end1, start2)
+        offset = offsets[i]
         if ((offset > offset_threshold) or (strand1 != strand2)):
             continue
         record_.seq = concat_with_bridge(record_.seq, record2.seq, offset, max_offset)
@@ -228,19 +227,19 @@ def check_block_viability(block1, block2, species_consensus_threshold, block_dis
     start2, end2 = reference2.annotations["start"], reference2.annotations["start"] + reference2.annotations["size"]
     
     if coordinate_distance(end1, start2) > block_distance_threshold:
-        print("Reason: Block distance")
+        print("No merge: Block distance")
         merge_flag = False
     elif reference1.annotations["strand"] != reference2.annotations["strand"]:
-        print("Reason: Divergent strandedness")
+        print("No merge: Divergent strandedness")
         merge_flag = False
     elif (len(reference1.seq) > block_length_threshold) or (len(reference2.seq) > block_length_threshold):
-        print("Reason: Length")
+        print("No merge: Length")
         merge_flag = False
     elif local_species_consensus(block1, block2) < species_consensus_threshold:
-        print("Reason: Low species consensus")
+        print("No merge: Low species consensus")
         merge_flag = False
     elif reference1.id != reference2.id:
-        print("Reason: Different reference ID")
+        print("No merge: Different reference ID")
         merge_flag = False
          
     return merge_flag
@@ -270,7 +269,6 @@ def main():
                                            options.species_consensus,
                                            options.distance,
                                            options.length)
-        print("Merge: %s" % merge_flag)
         if merge_flag == True: 
             block1 = merge_blocks(block1, block2, options.reference, 
                                   offset_threshold=options.distance)

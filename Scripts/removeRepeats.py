@@ -8,15 +8,15 @@ Created on Thu Jun 29 13:04:01 2023
 
 
 import sys
-from copy import deepcopy, copy
+from copy import deepcopy
 import numpy as np
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 
 
-min_length = 50
-min_gap_length = 10
+min_length = 40
+min_gap_length = 5
 ignore_masks = True
 max_gap_fraction = 0.75
 
