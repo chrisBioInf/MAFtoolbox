@@ -10,16 +10,13 @@ Created on Mon Jun 26 11:36:23 2023
 import sys
 import numpy as np
 from difflib import SequenceMatcher
-from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 
+from utility import read_maf, write_maf, print_maf_alignment
+
 
 ignore_masks = True
-keep_reference = True
-id_threshold = 0.8
-min_seqs = 6
-max_gaps = 0.5
 
 nucleotides = ['A', 'T', 'G', 'C', '-']
 
@@ -27,22 +24,6 @@ nucleotides = ['A', 'T', 'G', 'C', '-']
 def similarity_score(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
-
-def read_maf(filename):
-    handle = AlignIO.parse(open(filename, 'r'), format='maf')
-    return handle
-
-
-def write_maf(records, filename):
-    AlignIO.write(records, open(filename, 'w'), format='maf')
-
-
-def print_alignment_simple(alignment):
-    ref_record = alignment[0]
-    print("\nAlignment:  %s    %s  " % (ref_record.id, ref_record.annotations["start"]))
-    for record in alignment:
-        print("%s: \t %s" % (record.id, record.seq))
-        
         
 def eliminate_consensus_gaps(records):
     ungapped_seqs = []
@@ -86,7 +67,12 @@ def calculate_consensus_sequence(records):
     return consensus_seq
 
 
-def filter_records_by_similarity(alignment):
+def filter_records_by_similarity(alignment, options):
+    keep_reference = options.reference
+    id_threshold = options.id_threshold
+    min_seqs = options.min_seqs
+    max_gaps = options.max_gaps
+    
     length = len(alignment)
     current_records = [record for record in alignment]
     length = len(current_records[0].seq)
@@ -125,21 +111,35 @@ def filter_records_by_similarity(alignment):
         return MultipleSeqAlignment([alignment[0]])
     
     return MultipleSeqAlignment(current_records)
-    
 
-def main():
-    input_ = sys.argv[1]
-    output_ = sys.argv[2]
-    handle = read_maf(input_)
+
+def select_seqs(parser):
+    parser.add_option("-i","--input",action="store",type="string", dest="input",help="The (MAF) input file (Required).")
+    parser.add_option("-o","--output",action="store",type="string", default="", dest="out_file",help="MAF file to write to. If empty, results alignments are redirected to stdout.")
+    parser.add_option("-r", "--reference", action="store", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True)")
+    parser.add_option("-p","--id-threshold",action="store", type="float", default=0.8, dest="id_threshold", help="No further sequences are removed from alignment if average pairwise identity to the consensus sequence is equal to or larger than this value (Default: 0.8).")
+    parser.add_option("-s","--min-seqs",action="store",type="int", default=6, dest="min_seqs", help="No further sequences will be removed if input alignment reaches this number or fewer sequences (Default: 6).")
+    parser.add_option("-g","--max-gaps",action="store",type="float", default=0.5, dest="max_gaps", help="Alignments with a consensus sequence that has a fraction of gaps equal to or higher than this value will be discarded (Default: 0.5).")
+    options, args = parser.parse_args()
+    
+    required = ["input"]
+    
+    for r in required:
+        if options.__dict__[r] == None:
+            print("You must pass a --%s argument." % r)
+            sys.exit()
+    
+    handle = read_maf(options.input)
     output_alignments = []
     
     for alignment in handle:
-        alignment = filter_records_by_similarity(alignment)
+        alignment = filter_records_by_similarity(alignment, options)
         if len(alignment) > 1:
-            print_alignment_simple(alignment)
-            output_alignments.append(alignment)
+            if options.out_file == "":
+                print_maf_alignment(alignment)
+            else:
+                output_alignments.append(alignment)
     
-    write_maf(output_alignments, output_)
+    if len(output_alignments) > 0:
+        write_maf(output_alignments, options.out_file)
     
-    
-main()

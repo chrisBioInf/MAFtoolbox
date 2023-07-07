@@ -7,61 +7,43 @@ Created on Tue Jun 20 10:31:30 2023
 """
 
 
-from optparse import OptionParser
-import pandas as pd
 from Bio import AlignIO
 import sys
 
-
-__version__ = "0.5"
-
-columns = ["sequence", "start", "end", "score", "strand", ]
-columns_2 = ["sequence", "source", "type", "start", "end", "score", "empty", "strand", "attribute"]
+from utility import load_bed, write_maf, print_maf_alignment
 
 
-def load_bed(filename):
-    try:
-        df = pd.read_csv(filename, sep="\t", header=None, names=columns_2)
-    except Exception:
-        df = pd.read_csv(filename, sep="\t", header=None, names=columns)
-    return df
-
-
-def extract_blocks(maf_file, annotations):
-    
+def extract_blocks(maf_file, annotations, output):
     extracted_blocks = []
     handle = AlignIO.parse(open(maf_file, 'r'), format="maf")
-    annotation_index = 0
-    
     annotations["annotation_key"] = annotations['sequence'] + '_' + annotations['start'].astype(str) + '_' + annotations['end'].astype(str) 
     
     for alignment in handle:
         ref_seq = alignment[0]
         name = str(ref_seq.id)
-        # alignment[0].id = name
         start = int(ref_seq.annotations["start"])
         end = start + int(ref_seq.annotations["size"])
         key = "%s_%s_%s" % (name, start, end)
         
         if key in list(annotations['annotation_key']):
-            print(alignment)
-            extracted_blocks.append(alignment)
+            if output == "":
+                print_maf_alignment(alignment)
+            else:
+                extracted_blocks.append(alignment)
             
     return extracted_blocks
 
 
-def main():
+def extract_alignment(parser):
     if len(sys.argv) < 2:
         print("Usage:\npython extract_maf_by_coordinate.py -b [BED FILE] -a [ALIGNMENT FILE] ")
         sys.exit()
-    usage = "\npython %prog  -b [BED FILE] -a [ALIGNMENT FILE] \nNote that program assumes both files to be ordered."
-    parser = OptionParser(usage, version="%prog " + __version__)
-    parser.add_option("-b","--bed",action="store", type="string", dest="bed", help="Bed file with genomic coordinates to extract.")
-    parser.add_option("-a","--maf",action="store", type="string", dest="maf", help="MAF alignment file with coordinates corresponding to bed file.")
-    parser.add_option("-o","--output",action="store",type="string", dest="output", help="Designate an output file.")
-    
-    required = ["bed", "maf", "output"]
+    parser.add_option("-b","--bed",action="store", type="string", dest="bed", help="Bed file with genomic coordinates to extract (Required).")
+    parser.add_option("-m","--maf",action="store", type="string", dest="maf", help="MAF alignment file with coordinates corresponding to bed file (Required).")
+    parser.add_option("-o","--output",action="store",type="string", default="", dest="output", help="MAF file to write to. If empty, results alignments are redirected to stdout.")
     options, args = parser.parse_args()
+    
+    required = ["bed", "maf"]
     
     for r in required:
         if options.__dict__[r] == None:
@@ -69,10 +51,8 @@ def main():
             sys.exit()
             
     annotations = load_bed(options.bed)
-    extracted_blocks = extract_blocks(options.maf, annotations)
+    extracted_blocks = extract_blocks(options.maf, annotations, options.output)
     
-    AlignIO.write(extracted_blocks, open(options.output, "w"), format="maf")
-
-
-if __name__ == "__main__":
-    main()
+    if len(extracted_blocks) > 0:
+        write_maf(extracted_blocks, options.output)
+    

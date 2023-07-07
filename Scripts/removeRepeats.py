@@ -10,33 +10,14 @@ Created on Thu Jun 29 13:04:01 2023
 import sys
 from copy import deepcopy
 import numpy as np
-from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 
+from utility import read_maf, write_maf, alignments_to_stdout
 
-min_length = 40
-min_gap_length = 5
+
 ignore_masks = True
-max_gap_fraction = 0.75
-
 nucleotides = ['A', 'T', 'G', 'C', '-']
-
-
-def read_maf(filename):
-    handle = AlignIO.parse(open(filename, 'r'), format='maf')
-    return handle
-
-
-def write_maf(records, filename):
-    AlignIO.write(records, open(filename, 'w'), format='maf')
-
-
-def print_alignment_simple(alignment):
-    ref_record = alignment[0]
-    print("\nAlignment:  %s    %s    %s " % (ref_record.id, ref_record.annotations["start"], ref_record.annotations["size"]))
-    for record in alignment:
-        print("%s: \t %s" % (record.id, record.seq))
 
 
 def get_alignment_matrix(alignment, ignore_masks=False):
@@ -47,7 +28,7 @@ def get_alignment_matrix(alignment, ignore_masks=False):
     return column_matrix
 
 
-def slice_alignments(alignment, index_pairs, min_length=50):
+def slice_alignments(alignment, index_pairs, min_length=40, max_gap_fraction=0.75):
     length = len(alignment[0].seq)
     index_pairs_to_keep_a = [0]
     index_pairs_to_keep_b = []
@@ -61,7 +42,6 @@ def slice_alignments(alignment, index_pairs, min_length=50):
     index_pairs_to_keep = list(zip(index_pairs_to_keep_a, index_pairs_to_keep_b))
     
     result_alignments = []
-    print(index_pairs_to_keep)
     
     for (a, b) in index_pairs_to_keep:
         records_ = []
@@ -85,7 +65,6 @@ def slice_alignments(alignment, index_pairs, min_length=50):
             continue
         
         sub_alignment = MultipleSeqAlignment(records_)
-        print_alignment_simple(sub_alignment)
         result_alignments.append(sub_alignment)
     
     return result_alignments
@@ -125,19 +104,40 @@ def screen_for_gaps(matrix, min_gap_length=5, ignore_masks=False):
         i += 1
 
     return index_pairs_to_cut
-    
-    
-input_ = sys.argv[1]
-output_ = sys.argv[2]
-handle = read_maf(input_)
-alignments_out = []
 
-for alignment in handle:
-    matrix = get_alignment_matrix(alignment)
-    index_pairs = screen_for_gaps(matrix, min_gap_length=min_gap_length, ignore_masks=ignore_masks)
-    results = slice_alignments(alignment, index_pairs, min_length=min_length)
-    alignments_out += results
-
-write_maf(alignments_out, output_)
+        
+def mask_repeat_regions(parser):
+    parser.add_option("-i","--input",action="store",type="string", dest="input", help="The (MAF) input file (Required).")
+    parser.add_option("-o","--output",action="store",type="string", default="", dest="out_file",help="MAF file to write to. If empty, results alignments are redirected to stdout.")
+    parser.add_option("-l","--min-length",action="store",type="int", default=40, dest="length",help="Minimal MAF block length for reporting. Shorter blocks will be dropped (Default: 40).")
+    parser.add_option("-g","--min-gap-length",action="store",type="int", default=5, dest="gap_length",help="Continous gap columns shorter than this value will be ignored (Default: 5).")
+    parser.add_option("-u","--max-gap-fraction",action="store",type="float", default=0.75, dest="gap_fraction",help="Maximum fraction of gaps in output alignment. Blocks with higher gap fraction will be dropped (Default: 0.75).")
+    options, args = parser.parse_args()
     
+    required = ["input"]
+    
+    for r in required:
+        if options.__dict__[r] == None:
+            print("You must pass a --%s argument." % r)
+            sys.exit()
+    
+    handle = read_maf(options.input)
+    
+    min_length = options.length
+    min_gap_length = options.gap_length
+    max_gap_fraction = options.gap_fraction
+    alignments_out = []
+    
+    for alignment in handle:
+        matrix = get_alignment_matrix(alignment)
+        index_pairs = screen_for_gaps(matrix, min_gap_length=min_gap_length, ignore_masks=ignore_masks)
+        results = slice_alignments(alignment, index_pairs, min_length=min_length, max_gap_fraction=max_gap_fraction)
+        if options.out_file != "":
+            alignments_out += results
+        else:
+            alignments_to_stdout(results)
+    
+    if options.out_file != "":
+        write_maf(alignments_out, options.out_file)
+        
     

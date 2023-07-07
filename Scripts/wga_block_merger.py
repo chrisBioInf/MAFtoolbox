@@ -8,29 +8,12 @@ Created on Tue Mar 14 09:52:16 2023
 
 
 import sys
-import os
-from optparse import OptionParser
-from Bio import AlignIO, Seq
-from Bio.Align import MultipleSeqAlignment
+from Bio import Seq
 import numpy as np
-from scipy import stats
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-
-if THIS_DIR not in sys.path:
-    sys.path.append(THIS_DIR)
-
-from maf_to_gtf import maf_to_gtf
-
-
-def print_alignment_simple(records):
-    for i in range(0, len(records)):
-        print(records[i].id)
-        print(str(records[i].seq))
+from utility import write_maf, read_maf, print_maf_alignment
 
 
 def plot_merge_summary(records, merged_records, merged_blocks_n, alignment_file, block_length_threshold):
@@ -66,33 +49,7 @@ def plot_merge_summary(records, merged_records, merged_blocks_n, alignment_file,
     ax[1][1].set_ylabel("Probability")
     plt.savefig("%s_merge.pdf" % alignment_file, dpi=300, bbox_inches="tight")
     plt.savefig("%s_merge.svg" % alignment_file, dpi=300, bbox_inches="tight")
-
-
-def print_similarity_matrix(matrix, records):
-    record_labels = [str(record.id) for record in records]
-    similarity_columns = {}
-    
-    for i in range(0, len(record_labels)):
-        similarity_columns[record_labels[i]] = matrix[i]
-    
-    df = pd.DataFrame(data=similarity_columns, index=similarity_columns).round(4)
-    start, end = records[i].annotations["start"], records[i].annotations["start"] + records[i].annotations["size"]
-    df.to_csv("Similarity_matrices/dmel_%s_%s.tsv" % (start, end), sep="\t")
-    return df
-    
-
-def load_alignment_file(filename):
-    handle = AlignIO.parse(handle=open(filename, 'r'), format="maf")
-    alignments = [align for align in handle]
-    return alignments
-
-
-def write_alignments(alignments, filename):
-    if not filename.endswith(".maf"):
-        filename = filename + ".maf"
-    AlignIO.write([MultipleSeqAlignment(records=records) for records in alignments], 
-                  handle=open(filename, 'w'), 
-                  format="maf")
+    plt.show()
 
 
 def coordinate_distance(end1, start2):
@@ -124,7 +81,6 @@ def eliminate_consensus_gaps(records):
     ungapped_seqs = []
     seq_matrix = np.array([list(record.seq) for record in records])
     for i in range(0, len(records)):
-        seq = str(records[i].seq)
         seq_ = ""
         for c in range(0, len(seq_matrix[i])):
             if seq_matrix[i][c] != "-":
@@ -140,24 +96,6 @@ def eliminate_consensus_gaps(records):
         records[i].seq = Seq.Seq(ungapped_seqs[i])
     
     return records
-    
-
-def filter_by_pairwise_id(records):
-    seqs = [str(record.seq) for record in records]
-    ids = [str(record.id) for record in records]
-    matrix = np.ones(shape=(len(records), len(records)))
-    
-    for i in range(0, len(records)-1):
-        record_ = records[i]
-        seq = str(record_.seq)
-        id_ = str(record_.id)
-        for j in range(i+1, len(records)):
-            seq_ = str(records[j].seq)
-            pairwise_id = pairwise_sequence_identity(seq, seq_)
-            matrix[i][j] = pairwise_id
-            matrix[j][i] = pairwise_id
-            
-    return matrix
 
 
 def filter_by_seq_length(records, reference=True):
@@ -215,7 +153,6 @@ def merge_blocks(block1, block2, reference=True, offset_threshold=0):
         record_.annotations["size"] = (end1 - start1) + offset + (end2 - start2)
         merged_records.append(record_)
     
-    # matrix = filter_by_pairwise_id(merged_records)
     return merged_records
 
 
@@ -227,44 +164,55 @@ def check_block_viability(block1, block2, species_consensus_threshold, block_dis
     start2, end2 = reference2.annotations["start"], reference2.annotations["start"] + reference2.annotations["size"]
     
     if coordinate_distance(end1, start2) > block_distance_threshold:
-        print("No merge: Block distance")
         merge_flag = False
     elif reference1.annotations["strand"] != reference2.annotations["strand"]:
-        print("No merge: Divergent strandedness")
         merge_flag = False
     elif (len(reference1.seq) > block_length_threshold) or (len(reference2.seq) > block_length_threshold):
-        print("No merge: Length")
         merge_flag = False
     elif local_species_consensus(block1, block2) < species_consensus_threshold:
-        print("No merge: Low species consensus")
         merge_flag = False
     elif reference1.id != reference2.id:
-        print("No merge: Different reference ID")
         merge_flag = False
          
     return merge_flag
 
 
-def main():
-    parser = OptionParser(usage="wga_block_merger.py",version="%prog 0.1" )
-    parser.add_option("-m","--maf",action="store",type="string", dest="in_file",help="The (MAF) input file (Required).")
-    parser.add_option("-o", "--output", action="store", type="string", dest="out_file", help="Output destination (file).")
-    parser.add_option("-r", "--reference", action="store", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True).")
+def merge(parser):
+    parser.add_option("-i","--input",action="store",type="string", dest="input",help="The (MAF) input file (Required).")
+    parser.add_option("-o", "--output", action="store", type="string", dest="out_file", default="", help="MAF file to write to. If empty, results alignments are redirected to stdout.")
+    parser.add_option("-r", "--reference", action="store", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True)")
     parser.add_option("-s", "--species-consensus", action="store", type="float", default=0.75, dest="species_consensus", help="Minimal consensus between neighboring blocks for merging (Default: 0.75).")
-    parser.add_option("-d", "--max-distance", action="store", default=0, type="int", dest="distance", help="Maximum distance between genomic coordinates of sequences for merging of neighboring blocks? (Default: 0).")
-    parser.add_option("-l", "--max-length", action="store", default=1000, type="int", dest="length", help="Merged alignment blocks will ot be extended past this block length (Default: 1000).")
+    parser.add_option("-d", "--max-distance", action="store", default=0, type="int", dest="distance", help="Maximum distance between genomic coordinates of sequences for merging of neighboring blocks (Default: 0).")
+    parser.add_option("-l", "--max-length", action="store", default=1000, type="int", dest="length", help="Merged alignment blocks will not be extended past this block length (Default: 1000).")
+    parser.add_option("-p", "--plotting", action="store", default=False, dest="plotting", help="Plot a graphic summary of merge results and save to file named [input file].svg (Default: False).")
     options, args = parser.parse_args()
-    alignments = load_alignment_file(options.in_file)
+    
+    required = ["input"]
+    
+    for r in required:
+        if options.__dict__[r] == None:
+            print("You must pass a --%s argument." % r)
+            sys.exit()
+    
+    alignments = read_maf(options.input)
     merged_alignments = []
-    i = 0
-    block1 = alignments[0]
+    block1 = next(alignments)
     merged_blocks_n = []
     local_merges = 1
-    length = len(alignments)
     
-    while i < length-1:
-        print("Scan MAF block: %s / %s" % (i+1, length))
-        block2 = alignments[i+1]
+    while block1 != None:
+        block2 = next(alignments, None)
+        
+        if block2 == None:
+            # records = filter_by_seq_length(block1, options.reference)
+            records = eliminate_consensus_gaps(block1)
+            merged_blocks_n.append(local_merges)
+            if options.out_file == "":
+                print_maf_alignment(records)
+            else:
+                merged_alignments.append(records)
+            break
+                
         merge_flag = check_block_viability(block1, block2, 
                                            options.species_consensus,
                                            options.distance,
@@ -273,27 +221,21 @@ def main():
             block1 = merge_blocks(block1, block2, options.reference, 
                                   offset_threshold=options.distance)
             local_merges += 1
-            i += 1
-            if i == length-1:
-                records = filter_by_seq_length(block1, options.reference)
-                records = eliminate_consensus_gaps(records)
-                merged_alignments.append(records)
-                merged_blocks_n.append(local_merges)
         else:
-            records = filter_by_seq_length(block1, options.reference)
-            records = eliminate_consensus_gaps(records)
-            merged_alignments.append(records)
+            # records = filter_by_seq_length(block1, options.reference)
+            records = eliminate_consensus_gaps(block1)
             merged_blocks_n.append(local_merges)
-            i += 1
             local_merges = 1
-            block1 = alignments[i]
-            
-    if merge_flag == False:
-        merged_alignments.append(eliminate_consensus_gaps(filter_by_seq_length(alignments[-1])))
-            
-    plot_merge_summary(alignments, merged_alignments, merged_blocks_n, options.in_file, options.length)
-    write_alignments(merged_alignments, options.out_file)
+            block1 = block2
+            if options.out_file == "":
+                print_maf_alignment(records)
+            else:
+                merged_alignments.append(records)
+                
+    if options.plotting == True:
+        plot_merge_summary(read_maf(options.input), merged_alignments, merged_blocks_n, options.input, options.length)
     
-
-if __name__ == "__main__":
-    main()
+    if options.out_file != "":
+        write_maf(merged_alignments, options.out_file)
+    
+    

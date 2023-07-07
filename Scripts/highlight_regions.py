@@ -7,8 +7,8 @@ Created on Tue Jul  4 11:10:29 2023
 """
 
 
+import sys
 from Bio import AlignIO
-from optparse import OptionParser
 import pandas as pd
 
 
@@ -52,13 +52,15 @@ def print_highlighted_sequence(record, color_start_index, color_end_index):
     seq_ = str(record.seq)
     start = record.annotations.get("start")
     size = record.annotations.get("size")
+    strand = record.annotations.get("strand")
+    srcsize = record.annotations.get("srcSize")
     section1 = seq_[:color_start_index]
     colored_section = seq_[color_start_index:color_end_index]
     section2 = seq_[color_end_index:]
-    print('s %s \t%s \t%s \t %s%s%s%s%s' % (record.id, start, size,
-                                            section1, bcolors.GREEN, 
-                                            colored_section, 
-                                            bcolors.ENDC, section2))
+    print('s %s \t%s \t%s \t%s \t%s \t %s%s%s%s%s' % (record.id, start, size, strand, srcsize,
+                                                section1, bcolors.GREEN, 
+                                                colored_section, 
+                                                bcolors.ENDC, section2))
 
 
 def print_highlighted_alignment(alignment, df):
@@ -70,7 +72,6 @@ def print_highlighted_alignment(alignment, df):
     for i in range(0, len(df)):
         if len(df["range"].iloc[i].intersection(start_end)) == 0:
             continue
-        anno_start = df["start"].iloc[i]
         anno_size = df["end"].iloc[i] -df["start"].iloc[i]
         offset_start = df["start"].iloc[i] -start
         offset_end = offset_start + anno_size
@@ -103,28 +104,29 @@ def print_highlighted_alignment(alignment, df):
         color_end_index = len(section1) + len(colored_section)
         
         print('\na')
-        print('s %s \t%s \t%s \t %s%s%s%s%s' % (alignment[0].id, start, size,
-                                                section1, bcolors.GREEN, 
-                                                colored_section, 
-                                                bcolors.ENDC, section2))
+        print_highlighted_sequence(alignment[0], color_start_index, color_end_index)
+
         for record in alignment[1:]:
             print_highlighted_sequence(record, color_start_index, color_end_index)
 
-                
         
-def main():
-    parser = OptionParser(usage,version="%prog " + __version__)
-    parser.add_option("-m","--maf",action="store",type="string", dest="in_file",help="The (MAF) input file (Required).")
-    parser.add_option("-b", "--bed", action="store", type="string", dest="bed", help="BED annotation file with sequences to highlight.")
+def highlight_regions(parser):
+    parser.add_option("-b","--bed",action="store", type="string", dest="bed", help="Bed file with genomic coordinates to extract (Required).")
+    parser.add_option("-m","--maf",action="store", type="string", dest="maf", help="MAF alignment file with coordinates corresponding to bed file (Required).")
     options, args = parser.parse_args()
     
+    required = ["bed", "maf"]
+    
+    for r in required:
+        if options.__dict__[r] == None:
+            print("You must pass a --%s argument." % r)
+            sys.exit()
+    
     annotation = load_bed(options.bed)
-    handle = read_maf(options.in_file)
+    handle = read_maf(options.maf)
     
     for alignment in handle:
         name = alignment[0].id
         df_ = annotation[annotation["sequence"] == name]
         print_highlighted_alignment(alignment, df_)
 
-
-main()
