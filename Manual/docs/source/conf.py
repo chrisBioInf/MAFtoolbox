@@ -14,7 +14,7 @@ release = '0.5'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = []
+extensions = ['rst2pdf.pdfbuilder']
 
 templates_path = ['_templates']
 exclude_patterns = []

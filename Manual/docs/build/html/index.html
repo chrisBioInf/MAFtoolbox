@@ -31,7 +31,7 @@
             
   <section id="maftoolbox-user-manual">
 <h1>MAFtoolbox User Manual<a class="headerlink" href="#maftoolbox-user-manual" title="Permalink to this heading">¶</a></h1>
-<p><strong>MAFtoolbox</strong> (/lu’make/) is a Software written in Python that implements
+<p><strong>MAFtoolbox</strong> is a Software written in Python that implements
 a range of operations and transformations on genome alignments in the Multiple Alignment
 Format (MAF). Examples of use case include the extraction of alignment subblocks
 based on gene annotations, filtering of sequences based on identity and
@@ -50,6 +50,65 @@ merging of fragmented neighboring alignment blocks into lnger, coherent blocks.<
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
+</section>
+<section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">¶</a></h1>
+<p>While a bioconda installation is planned for future release, right now it
+is heavily suggested to use the precompiled executable built with pyinstaller.
+Download and unpack the archive, then navigate to the distributed binaries folder with:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd MAFtoolbox/dist/MAFtools</span>
+</pre></div>
+</div>
+<p>You can test the executable with:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./MAFtools --help</span>
+</pre></div>
+</div>
+<p>This should produce a short list of programs executable with MAFtools. To get more
+information on one (here, as an example, for extracting alignment blocks according to
+genome coordinates), you can type:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./MAFtools extract --help</span>
+</pre></div>
+</div>
+<p>As it is obviously annoying to only use MAFtools from inside the download directory,
+I would suggest setting up an alias for now, like this:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">alias MAFtools=$(pwd)/MAFtools</span>
+</pre></div>
+</div>
+<p>As mentioned, a full installer automating this process will follow.</p>
+</section>
+<section id="example-usage">
+<h1>Example usage<a class="headerlink" href="#example-usage" title="Permalink to this heading">¶</a></h1>
+<p>The MAFtoolbox comes with a few example files, that can be used to play around
+and get to know basic functionality. One useful application might be
+highlighting the part of an alignment that includes some annotated gene.
+The program</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">MAFtools highlight</span>
+</pre></div>
+</div>
+<p>exists for this purpose. In the most simple case, we can simply provide a MAF
+alignment file and a corresponding annotation file in bed format. Note that
+the sequence names (for example chrX, chrY…) in the annotation file need to exactly correspond with
+the sequence names found in the alignment file to be found.
+As a simple showcase, move to the root directory of the MAFtoolbox archive and type</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">MAFtools highlight --maf Examples/Apoidea_genome_tRNA_blocks_filtered.maf --bed Examples/Amel_tRNA_examples.bed</span>
+</pre></div>
+</div>
+<p>The output should display the alignments in MAF format, but with the coordinates corresponding to
+the genes found in the .bed file highlighted in green. What if we want to highlight the
+annotated genes -and- an additional 5 nucleotides (with respect to the reference sequence)
+in both directions? We can use the -s (–sense) and -n (–antisense) parameters to add any
+number of nucleotides to be highlighted:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">MAFtools highlight --maf Examples/Apoidea_genome_tRNA_blocks_filtered.maf --bed Examples/Amel_tRNA_examples.bed -s 5 -n 5</span>
+</pre></div>
+</div>
+<p>You will notice that the highlighted regions are now enlarged corresponding to the -s and -n
+parameters, but these overhang regions will be colored the same way as the annotated sequence.
+To allow for visual distinction we can give the overhang regions another color, for example red:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">MAFtools highlight --maf Examples/Apoidea_genome_tRNA_blocks_filtered.maf --bed Examples/Amel_tRNA_examples.bed -s -n 5 --overhang-color RED</span>
+</pre></div>
+</div>
+<p>Now it should be readily visible what is what.</p>
+<p>You can always explore all program options and parameters with the –help function.</p>
 </section>
 
 
