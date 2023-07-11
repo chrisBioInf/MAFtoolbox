@@ -1,5 +1,0 @@
-
-- Allow alignment extraction to withdraw subalignments
-- Allow alignment extraction/highlighting with overhangs
-- Write install script
-- Make/Export conda env 
