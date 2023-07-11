@@ -65,9 +65,6 @@
   ('maf_to_gtf',
    '/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAF-block-merger/Scripts/maf_to_gtf.py',
    'PYSOURCE'),
-  ('merge_overlap_blocks',
-   '/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAF-block-merger/Scripts/merge_overlap_blocks.py',
-   'PYSOURCE'),
   ('removeRepeats',
    '/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAF-block-merger/Scripts/removeRepeats.py',
    'PYSOURCE'),
@@ -86,7 +83,7 @@
  [],
  False,
  False,
- 1689066907,
+ 1689069234,
  [('run',
    '/home/christopher/mambaforge/envs/MAFtools/lib/python3.9/site-packages/PyInstaller/bootloader/Linux-64bit-intel/run',
    'EXECUTABLE')])
