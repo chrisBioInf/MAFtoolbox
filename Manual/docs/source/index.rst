@@ -1,0 +1,31 @@
+.. MAFtoolbox documentation master file, created by
+   sphinx-quickstart on Tue Jul 11 14:42:19 2023.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+
+MAFtoolbox User Manual
+======================================
+
+**MAFtoolbox** is a Software written in Python that implements
+a range of operations and transformations on genome alignments in the Multiple Alignment 
+Format (MAF). Examples of use case include the extraction of alignment subblocks
+based on gene annotations, filtering of sequences based on identity and
+merging of fragmented neighboring alignment blocks into lnger, coherent blocks. 
+
+.. note::
+
+   This project is currently under development.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
