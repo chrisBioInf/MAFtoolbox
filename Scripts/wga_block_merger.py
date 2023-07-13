@@ -124,7 +124,7 @@ def check_block_viability(block1, block2, species_consensus_threshold, block_dis
 def merge(parser):
     parser.add_option("-i","--input",action="store",type="string", dest="input",help="The (MAF) input file (Required).")
     parser.add_option("-o", "--output", action="store", type="string", dest="out_file", default="", help="MAF file to write to. If empty, results alignments are redirected to stdout.")
-    parser.add_option("-r", "--reference", action="store", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True)")
+    parser.add_option("-r", "--no-reference", action="store_false", default=True, dest="reference", help="Set this flag if the first sequence should NOT be considered as reference.")
     parser.add_option("-s", "--species-consensus", action="store", type="float", default=0.75, dest="species_consensus", help="Minimal consensus between neighboring blocks for merging (Default: 0.75).")
     parser.add_option("-d", "--max-distance", action="store", default=0, type="int", dest="distance", help="Maximum distance between genomic coordinates of sequences for merging of neighboring blocks (Default: 0).")
     parser.add_option("-l", "--max-length", action="store", default=1000, type="int", dest="length", help="Merged alignment blocks will not be extended past this block length (Default: 1000).")

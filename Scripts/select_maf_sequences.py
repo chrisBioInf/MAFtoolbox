@@ -83,7 +83,7 @@ def filter_records_by_similarity(alignment, options):
 def select_seqs(parser):
     parser.add_option("-i","--input",action="store",type="string", dest="input",help="The (MAF) input file (Required).")
     parser.add_option("-o","--output",action="store",type="string", default="", dest="out_file",help="MAF file to write to. If empty, results alignments are redirected to stdout.")
-    parser.add_option("-r", "--reference", action="store", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True)")
+    parser.add_option("-r", "--no-reference", action="store_false", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True)")
     parser.add_option("-p","--id-threshold",action="store", type="float", default=0.8, dest="id_threshold", help="No further sequences are removed from alignment if average pairwise identity to the consensus sequence is equal to or larger than this value (Default: 0.8).")
     parser.add_option("-s","--min-seqs",action="store",type="int", default=6, dest="min_seqs", help="No further sequences will be removed if input alignment reaches this number or fewer sequences (Default: 6).")
     parser.add_option("-g", "--max-gaps", action="store", default=0.9, type="float", dest="max_gaps", help="All sequences with a larger gap fraction than this value will be dropped (Default: 0.9).")
