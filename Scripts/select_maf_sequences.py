@@ -12,7 +12,7 @@ import numpy as np
 from difflib import SequenceMatcher
 from Bio.Align import MultipleSeqAlignment
 
-from utility import read_maf, write_maf, print_maf_alignment, eliminate_consensus_gaps
+from utility import read_maf, write_maf, print_maf_alignment, eliminate_consensus_gaps, max_gap_seqs
 
 
 ignore_masks = True
@@ -48,11 +48,7 @@ def filter_records_by_similarity(alignment, options):
     keep_reference = options.reference
     id_threshold = options.id_threshold
     min_seqs = options.min_seqs
-    max_gaps = options.max_gaps
-    
-    length = len(alignment)
     current_records = [record for record in alignment]
-    length = len(current_records[0].seq)
     
     if len(alignment) < 3:
         return alignment
@@ -62,12 +58,6 @@ def filter_records_by_similarity(alignment, options):
     
     while not alignment_finalized:
         consensus_seq = calculate_consensus_sequence(current_records)
-        gap_fraction = consensus_seq.count('-') / length
-        
-        if gap_fraction > max_gaps:
-            alignment_discarded = True
-            break
-        
         similarity_column = [similarity_score(record.seq, consensus_seq) for record in current_records]
         
         minimal_indices = sorted(np.argpartition(similarity_column, 2)[:2])
@@ -77,7 +67,7 @@ def filter_records_by_similarity(alignment, options):
         current_records.pop(minimal_index)
         
         if len(current_records) <= min_seqs:
-            alignment_finalized = True 
+            alignment_finalized = True
             
         if np.mean(similarity_column) > id_threshold:
             alignment_finalized = True
@@ -96,7 +86,7 @@ def select_seqs(parser):
     parser.add_option("-r", "--reference", action="store", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True)")
     parser.add_option("-p","--id-threshold",action="store", type="float", default=0.8, dest="id_threshold", help="No further sequences are removed from alignment if average pairwise identity to the consensus sequence is equal to or larger than this value (Default: 0.8).")
     parser.add_option("-s","--min-seqs",action="store",type="int", default=6, dest="min_seqs", help="No further sequences will be removed if input alignment reaches this number or fewer sequences (Default: 6).")
-    parser.add_option("-g","--max-gaps",action="store",type="float", default=0.5, dest="max_gaps", help="Alignments with a consensus sequence that has a fraction of gaps equal to or higher than this value will be discarded (Default: 0.5).")
+    parser.add_option("-g", "--max-gaps", action="store", default=0.9, type="float", dest="max_gaps", help="All sequences with a larger gap fraction than this value will be dropped (Default: 0.9).")
     options, args = parser.parse_args()
     
     required = ["input"]
@@ -110,6 +100,7 @@ def select_seqs(parser):
     output_alignments = []
     
     for alignment in handle:
+        alignment = max_gap_seqs(alignment, max_gaps=options.max_gaps, reference=options.reference)
         alignment = filter_records_by_similarity(alignment, options)
         if len(alignment) > 1:
             if options.out_file == "":
