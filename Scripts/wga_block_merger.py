@@ -10,46 +10,10 @@ Created on Tue Mar 14 09:52:16 2023
 import sys
 from Bio import Seq
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 
-from utility import write_maf, read_maf, print_maf_alignment
-
-
-def plot_merge_summary(records, merged_records, merged_blocks_n, alignment_file, block_length_threshold):
-    lengths = []
-    blocks = []
-    seq_ns = []
-    
-    for record in records:
-        lengths.append(len(record[0].seq))
-        blocks.append("Pre-Merge")
-        seq_ns.append(len(record))
-    for record in merged_records:
-        lengths.append(len(record[0].seq))
-        seq_ns.append(len(record))
-        blocks.append("Post-Merge")
-    
-    data= {
-        "Length": lengths,
-        "Merge status": blocks,
-        "Number of species": seq_ns,
-        "Merged blocks": merged_blocks_n,
-        }
-    fig, ax = plt.subplots(2, 2, figsize=(9, 8))
-    sns.countplot(data=data, x="Merge status", edgecolor='k', ax=ax[0][0], width=0.5)
-    ax[0][0].set_ylabel("Count")
-    sns.boxplot(data=data, x="Merge status", y="Length", ax=ax[0][1])
-    ax[0][1].set_ylabel("Length [nt]")
-    ax[0][1].plot([-1, 2], [block_length_threshold, block_length_threshold], 'k--')
-    ax[0][1].set_yscale("log")
-    sns.boxplot(data=data, x="Merge status", y="Number of species", ax=ax[1][0], width=0.5)
-    ax[1][0].set_ylabel("Number of Species")
-    sns.histplot(data=data, x="Merged blocks", stat='probability', ax=ax[1][1])
-    ax[1][1].set_ylabel("Probability")
-    plt.savefig("%s_merge.pdf" % alignment_file, dpi=300, bbox_inches="tight")
-    plt.savefig("%s_merge.svg" % alignment_file, dpi=300, bbox_inches="tight")
-    plt.show()
+from utility import write_maf, read_maf, print_maf_alignment, sortRecords
 
 
 def coordinate_distance(end1, start2):
@@ -62,8 +26,8 @@ def pairwise_sequence_identity(seq1, seq2):
         if seq1[i] == seq2[i]:
             count += 1
     return count / len(seq1)
-    
-
+ 
+ 
 def local_species_consensus(block1, block2):
     block1_ids = set([str(seq.id) for seq in block1])
     block2_ids = set([str(seq.id) for seq in block2])
@@ -133,12 +97,15 @@ def merge_blocks(block1, block2, reference=True, offset_threshold=0):
     
     block1_records = [record for record in block1 if record.id in consensus_blocks]
     block2_records = [record for record in block2 if record.id in consensus_blocks]
+    sortRecords(block1_records)
+    sortRecords(block2_records)
+    
     merged_records = []
     offsets = []
     
     for i in range(0, len(block1_records)):
-        offsets.append( coordinate_distance(block1_records[i].annotations["start"] + block1_records[i].annotations["size"]
-                                            ,block2_records[i].annotations["start"] ))
+        offsets.append( coordinate_distance(block1_records[i].annotations["start"] + block1_records[i].annotations["size"],
+                                            block2_records[i].annotations["start"] ))
     max_offset = max(offsets)
     
     for i in range(0, len(block1_records)):
@@ -184,7 +151,7 @@ def merge(parser):
     parser.add_option("-s", "--species-consensus", action="store", type="float", default=0.75, dest="species_consensus", help="Minimal consensus between neighboring blocks for merging (Default: 0.75).")
     parser.add_option("-d", "--max-distance", action="store", default=0, type="int", dest="distance", help="Maximum distance between genomic coordinates of sequences for merging of neighboring blocks (Default: 0).")
     parser.add_option("-l", "--max-length", action="store", default=1000, type="int", dest="length", help="Merged alignment blocks will not be extended past this block length (Default: 1000).")
-    parser.add_option("-p", "--plotting", action="store", default=False, dest="plotting", help="Plot a graphic summary of merge results and save to file named [input file].svg (Default: False).")
+    # parser.add_option("-p", "--plotting", action="store", default=False, dest="plotting", help="Plot a graphic summary of merge results and save to file named [input file].svg (Default: False).")
     options, args = parser.parse_args()
     
     required = ["input"]
@@ -204,7 +171,6 @@ def merge(parser):
         block2 = next(alignments, None)
         
         if block2 == None:
-            # records = filter_by_seq_length(block1, options.reference)
             records = eliminate_consensus_gaps(block1)
             merged_blocks_n.append(local_merges)
             if options.out_file == "":
@@ -222,7 +188,6 @@ def merge(parser):
                                   offset_threshold=options.distance)
             local_merges += 1
         else:
-            # records = filter_by_seq_length(block1, options.reference)
             records = eliminate_consensus_gaps(block1)
             merged_blocks_n.append(local_merges)
             local_merges = 1
@@ -231,10 +196,7 @@ def merge(parser):
                 print_maf_alignment(records)
             else:
                 merged_alignments.append(records)
-                
-    if options.plotting == True:
-        plot_merge_summary(read_maf(options.input), merged_alignments, merged_blocks_n, options.input, options.length)
-    
+
     if options.out_file != "":
         write_maf(merged_alignments, options.out_file)
     

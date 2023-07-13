@@ -42,6 +42,22 @@ def load_gtf(filename):
     return df
 
 
+def sortRecords(records):
+    n = len(records)
+    if n < 3:
+        return
+    swapped = False
+    
+    for i in range(1, n-1):
+        for j in range(1, n-i-1):
+            if records[j].id > records[j + 1].id:
+                swapped = True
+                records[j], records[j + 1] = records[j + 1], records[j]
+         
+        if not swapped:
+            return
+
+
 def print_maf_alignment(alignment):
     print("\na")
     for record in alignment:
