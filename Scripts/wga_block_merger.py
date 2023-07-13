@@ -10,10 +10,8 @@ Created on Tue Mar 14 09:52:16 2023
 import sys
 from Bio import Seq
 import numpy as np
-# import seaborn as sns
-# import matplotlib.pyplot as plt
 
-from utility import write_maf, read_maf, print_maf_alignment, sortRecords
+from utility import write_maf, read_maf, print_maf_alignment, sortRecords, eliminate_consensus_gaps, max_gap_seqs
 
 
 def coordinate_distance(end1, start2):
@@ -39,27 +37,6 @@ def concat_with_bridge(seq1, seq2, offset, max_offset):
     n_gaps = max_offset - offset
     seq_ = Seq.Seq(str(seq1) + "N"*offset + '-'*n_gaps + str(seq2)) 
     return seq_
-
-
-def eliminate_consensus_gaps(records):
-    ungapped_seqs = []
-    seq_matrix = np.array([list(record.seq) for record in records])
-    for i in range(0, len(records)):
-        seq_ = ""
-        for c in range(0, len(seq_matrix[i])):
-            if seq_matrix[i][c] != "-":
-                seq_ = seq_ + seq_matrix[i][c]
-                continue
-            for j in range(0, len(seq_matrix)):
-                if seq_matrix[j][c] != "-":
-                    seq_ = seq_ + seq_matrix[i][c]
-                    break
-        ungapped_seqs.append(seq_)
-    
-    for i in range(0, len(records)):
-        records[i].seq = Seq.Seq(ungapped_seqs[i])
-    
-    return records
 
 
 def filter_by_seq_length(records, reference=True):
@@ -151,7 +128,7 @@ def merge(parser):
     parser.add_option("-s", "--species-consensus", action="store", type="float", default=0.75, dest="species_consensus", help="Minimal consensus between neighboring blocks for merging (Default: 0.75).")
     parser.add_option("-d", "--max-distance", action="store", default=0, type="int", dest="distance", help="Maximum distance between genomic coordinates of sequences for merging of neighboring blocks (Default: 0).")
     parser.add_option("-l", "--max-length", action="store", default=1000, type="int", dest="length", help="Merged alignment blocks will not be extended past this block length (Default: 1000).")
-    # parser.add_option("-p", "--plotting", action="store", default=False, dest="plotting", help="Plot a graphic summary of merge results and save to file named [input file].svg (Default: False).")
+    parser.add_option("-g", "--max-gaps", action="store", default=0.9, type="float", dest="max_gaps", help="All sequences with a larger gap fraction than this value will be dropped (Default: 0.9).")
     options, args = parser.parse_args()
     
     required = ["input"]
@@ -172,6 +149,7 @@ def merge(parser):
         
         if block2 == None:
             records = eliminate_consensus_gaps(block1)
+            records = max_gap_seqs(records, options.max_gaps, options.reference)
             merged_blocks_n.append(local_merges)
             if options.out_file == "":
                 print_maf_alignment(records)
@@ -189,6 +167,7 @@ def merge(parser):
             local_merges += 1
         else:
             records = eliminate_consensus_gaps(block1)
+            records = max_gap_seqs(records, options.max_gaps, options.reference)
             merged_blocks_n.append(local_merges)
             local_merges = 1
             block1 = block2

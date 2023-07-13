@@ -7,8 +7,10 @@ Created on Thu Jul  6 14:10:16 2023
 """
 
 
+import numpy as np
 import pandas as pd
 from Bio import AlignIO
+from Bio.Seq import Seq
 
 
 bed_columns = ["sequence", "start", "end", "score", "strand", ]
@@ -29,7 +31,12 @@ def read_maf(filename):
 
 
 def write_maf(records, filename):
-    AlignIO.write(records, open(filename, 'w'), format='maf')
+    alignment = [record for record in records if record]
+    
+    if len(alignment) == 0:
+        print("Result alignment is empty! No file written.")
+    else:
+        AlignIO.write(alignment, open(filename, 'w'), format='maf')
 
 
 def load_bed(filename):
@@ -56,9 +63,53 @@ def sortRecords(records):
          
         if not swapped:
             return
+        
+        
+def eliminate_consensus_gaps(records):
+    ungapped_seqs = []
+    seq_matrix = np.array([list(record.seq) for record in records])
+    for i in range(0, len(records)):
+        seq_ = ""
+        for c in range(0, len(seq_matrix[i])):
+            if seq_matrix[i][c] != "-":
+                seq_ = seq_ + seq_matrix[i][c]
+                continue
+            for j in range(0, len(seq_matrix)):
+                if seq_matrix[j][c] != "-":
+                    seq_ = seq_ + seq_matrix[i][c]
+                    break
+        ungapped_seqs.append(seq_)
+    
+    for i in range(0, len(records)):
+        records[i].seq = Seq(ungapped_seqs[i])
+    
+    return records
+
+
+def max_gap_seqs(records, max_gaps=0, reference=True):
+    start_index = 0
+    if reference == True:
+        start_index = 1
+    length = len(records)
+    
+    if start_index >= length:
+        return 
+    
+    columns = len(str(records[0].seq))
+    drop_indices = set()
+    
+    for i in range(start_index, length):
+        gaps = records[i].seq.count("-")
+        gap_fraction = gaps / columns
+        if (gap_fraction > max_gaps) or (gaps == columns):
+            drop_indices.add(i)
+
+    return [records[n] for n in range(0, length) if n not in drop_indices]
 
 
 def print_maf_alignment(alignment):
+    if not alignment:
+        return
     print("\na")
     for record in alignment:
         print("s %s \t%s \t%s \t%s \t%s \t%s" % (record.id, 

@@ -11,9 +11,8 @@ import sys
 import numpy as np
 from difflib import SequenceMatcher
 from Bio.Align import MultipleSeqAlignment
-from Bio.Seq import Seq
 
-from utility import read_maf, write_maf, print_maf_alignment
+from utility import read_maf, write_maf, print_maf_alignment, eliminate_consensus_gaps
 
 
 ignore_masks = True
@@ -23,28 +22,6 @@ nucleotides = ['A', 'T', 'G', 'C', '-']
 
 def similarity_score(a, b):
     return SequenceMatcher(None, a, b).ratio()
-
-        
-def eliminate_consensus_gaps(records):
-    ungapped_seqs = []
-    for i in range(0, len(records)):
-        seq = str(records[i].seq)
-        seq_ = ""
-        for c in range(0, len(seq)):
-            if seq[c] != "-":
-                seq_ = seq_ + seq[c]
-                continue
-            for j in range(0, len(records)):
-                seq_2 = str(records[j].seq)
-                if seq_2[c] != "-":
-                    seq_ = seq_ + seq[c]
-                    break
-        ungapped_seqs.append(seq_)
-    
-    for i in range(0, len(records)):
-        records[i].seq = Seq(ungapped_seqs[i])
-    
-    return records
 
 
 def calculate_consensus_sequence(records):
