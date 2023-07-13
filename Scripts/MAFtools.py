@@ -23,11 +23,7 @@ __status__ = "Development"
 
 THIS_FILE = os.path.abspath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
-SCRIPT_DIR = os.path.join(THIS_DIR, "Scripts")
-
-if SCRIPT_DIR not in sys.path:
-    sys.path.append(SCRIPT_DIR)
-    
+# SCRIPT_DIR = os.path.join(THIS_DIR, "Scripts")  
 
 from wga_block_merger import merge
 from removeRepeats import mask_repeat_regions
