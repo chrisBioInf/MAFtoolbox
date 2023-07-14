@@ -8,12 +8,11 @@ Created on Tue Jun 20 10:31:30 2023
 
 
 from copy import deepcopy
-from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 import sys
 
-from utility import write_maf, alignments_to_stdout
+from utility import write_maf, alignments_to_stdout, check_positional_argument, read_maf
 from highlight_regions import load_bed_with_range
 
 
@@ -96,11 +95,11 @@ def get_subblock(alignment, df, sense, antisense):
     return alignments
 
 
-def extract_blocks(maf_file, annotations, sense=0, antisense=0, output=""):
+def extract_blocks(handle_, annotations, sense=0, antisense=0, output=""):
     output_blocks = []
-    handle = AlignIO.parse(open(maf_file, 'r'), format="maf")
+    alignment_handle = read_maf(handle_)
     
-    for alignment in handle:
+    for alignment in alignment_handle:
         extracted_alignments = get_subblock(alignment, annotations, sense, antisense)
         
         if output == "":
@@ -113,13 +112,14 @@ def extract_blocks(maf_file, annotations, sense=0, antisense=0, output=""):
 
 def extract_alignment(parser):
     parser.add_option("-b","--bed",action="store", type="string", dest="bed", help="Bed file with genomic coordinates to extract (Required).")
-    parser.add_option("-m","--maf",action="store", type="string", dest="maf", help="MAF alignment file with coordinates corresponding to bed file (Required).")
     parser.add_option("-s", "--sense",action="store",type="int",dest="sense",default=0,help="Add an overhang of this many nucleotides in sense (+) direction of reference strand (Default: 0).")
     parser.add_option("-n", "--antisense",action="store",type="int",dest="antisense",default=0,help="Add an overhang of this many nucleotides in antisense (-) direction of reference strand (Default: 0).")
     parser.add_option("-o","--output",action="store",type="string", default="", dest="output", help="MAF file to write to. If empty, results alignments are redirected to stdout.")
     options, args = parser.parse_args()
+    args = args[1:]
+    handle_ = check_positional_argument(args)
     
-    required = ["bed", "maf"]
+    required = ["bed", ]
     
     for r in required:
         if options.__dict__[r] == None:
@@ -127,7 +127,7 @@ def extract_alignment(parser):
             sys.exit()
             
     annotations = load_bed_with_range(options.bed)
-    extracted_blocks = extract_blocks(options.maf, annotations, options.sense, options.antisense, options.output)
+    extracted_blocks = extract_blocks(handle_, annotations, options.sense, options.antisense, options.output)
     
     if len(extracted_blocks) > 0:
         write_maf(extracted_blocks, options.output)

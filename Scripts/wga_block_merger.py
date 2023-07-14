@@ -11,7 +11,7 @@ import sys
 from Bio import Seq
 import numpy as np
 
-from utility import write_maf, read_maf, print_maf_alignment, sortRecords, eliminate_consensus_gaps, max_gap_seqs
+from utility import write_maf, read_maf, print_maf_alignment, sortRecords, eliminate_consensus_gaps, max_gap_seqs, check_positional_argument
 
 
 def coordinate_distance(end1, start2):
@@ -29,8 +29,9 @@ def pairwise_sequence_identity(seq1, seq2):
 def local_species_consensus(block1, block2):
     block1_ids = set([str(seq.id) for seq in block1])
     block2_ids = set([str(seq.id) for seq in block2])
-    consensus_score  = (len(block1_ids.intersection(block2_ids)) + len(block2_ids.intersection(block1_ids))) / (len(block1_ids) + len(block2_ids))
-    return consensus_score
+    consensus_species = len(block1_ids.intersection(block2_ids)) + len(block2_ids.intersection(block1_ids)) 
+    consensus_score  = consensus_species / (len(block1_ids) + len(block2_ids))
+    return consensus_species, consensus_score
 
 
 def concat_with_bridge(seq1, seq2, offset, max_offset):
@@ -100,20 +101,23 @@ def merge_blocks(block1, block2, reference=True, offset_threshold=0):
     return merged_records
 
 
-def check_block_viability(block1, block2, species_consensus_threshold, block_distance_threshold, block_length_threshold):
+def check_block_viability(block1, block2, species_consensus_threshold, block_distance_threshold, block_length_threshold, min_seqs=2):
     merge_flag = True
     reference1 = block1[0]
     reference2 = block2[0]
     start1, end1 = reference1.annotations["start"], reference1.annotations["start"] + reference1.annotations["size"]
     start2, end2 = reference2.annotations["start"], reference2.annotations["start"] + reference2.annotations["size"]
+    consensus_species, consensus_score = local_species_consensus(block1, block2)
     
     if coordinate_distance(end1, start2) > block_distance_threshold:
         merge_flag = False
     elif reference1.annotations["strand"] != reference2.annotations["strand"]:
         merge_flag = False
-    elif (len(reference1.seq) > block_length_threshold) or (len(reference2.seq) > block_length_threshold):
+    elif (len(reference1.seq) + len(reference2.seq)) > block_length_threshold:
+        merge_flag = False 
+    elif consensus_score < species_consensus_threshold:
         merge_flag = False
-    elif local_species_consensus(block1, block2) < species_consensus_threshold:
+    elif consensus_species < min_seqs:
         merge_flag = False
     elif reference1.id != reference2.id:
         merge_flag = False
@@ -122,23 +126,18 @@ def check_block_viability(block1, block2, species_consensus_threshold, block_dis
 
 
 def merge(parser):
-    parser.add_option("-i","--input",action="store",type="string", dest="input",help="The (MAF) input file (Required).")
     parser.add_option("-o", "--output", action="store", type="string", dest="out_file", default="", help="MAF file to write to. If empty, results alignments are redirected to stdout.")
     parser.add_option("-r", "--no-reference", action="store_false", default=True, dest="reference", help="Set this flag if the first sequence should NOT be considered as reference.")
     parser.add_option("-s", "--species-consensus", action="store", type="float", default=0.75, dest="species_consensus", help="Minimal consensus between neighboring blocks for merging (Default: 0.75).")
     parser.add_option("-d", "--max-distance", action="store", default=0, type="int", dest="distance", help="Maximum distance between genomic coordinates of sequences for merging of neighboring blocks (Default: 0).")
     parser.add_option("-l", "--max-length", action="store", default=1000, type="int", dest="length", help="Merged alignment blocks will not be extended past this block length (Default: 1000).")
     parser.add_option("-g", "--max-gaps", action="store", default=0.9, type="float", dest="max_gaps", help="All sequences with a larger gap fraction than this value will be dropped (Default: 0.9).")
+    parser.add_option("-m", "--min-seqs", action="store", default=2, type="int", dest="min_seqs", help="No merging will happen, if the blocks share this few or less sequences (Default: 2).")
     options, args = parser.parse_args()
+    args = args[1:]
+    handle_ = check_positional_argument(args)
     
-    required = ["input"]
-    
-    for r in required:
-        if options.__dict__[r] == None:
-            print("You must pass a --%s argument." % r)
-            sys.exit()
-    
-    alignments = read_maf(options.input)
+    alignments = read_maf(handle_)
     merged_alignments = []
     block1 = next(alignments)
     merged_blocks_n = []

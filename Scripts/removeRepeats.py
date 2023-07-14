@@ -13,7 +13,7 @@ import numpy as np
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 
-from utility import read_maf, write_maf, alignments_to_stdout, max_gap_seqs
+from utility import read_maf, write_maf, alignments_to_stdout, max_gap_seqs, check_positional_argument
 
 
 ignore_masks = True
@@ -106,28 +106,22 @@ def screen_for_gaps(matrix, min_gap_length=5, ignore_masks=False):
 
         
 def mask_repeat_regions(parser):
-    parser.add_option("-i","--input",action="store",type="string", dest="input", help="The (MAF) input file (Required).")
     parser.add_option("-o","--output",action="store",type="string", default="", dest="out_file",help="MAF file to write to. If empty, results alignments are redirected to stdout.")
     parser.add_option("-l","--min-length",action="store",type="int", default=40, dest="length",help="Minimal MAF block length for reporting. Shorter blocks will be dropped (Default: 40).")
     parser.add_option("-m","--min-gap-length",action="store",type="int", default=5, dest="gap_length",help="Continous gap columns shorter than this value will be ignored (Default: 5).")
     parser.add_option("-g", "--max-gaps", action="store", default=0.9, type="float", dest="max_gaps", help="All sequences with a larger gap fraction than this value will be dropped (Default: 0.9).")
     options, args = parser.parse_args()
+    args = args[1:]
+    handle_ = check_positional_argument(args)
     
-    required = ["input"]
-    
-    for r in required:
-        if options.__dict__[r] == None:
-            print("You must pass a --%s argument." % r)
-            sys.exit()
-    
-    handle = read_maf(options.input)
+    alignment_handle = read_maf(handle_)
     
     min_length = options.length
     min_gap_length = options.gap_length
     max_gap_fraction = options.max_gaps
     alignments_out = []
     
-    for alignment in handle:
+    for alignment in alignment_handle:
         matrix = get_alignment_matrix(alignment)
         index_pairs = screen_for_gaps(matrix, min_gap_length=min_gap_length, ignore_masks=ignore_masks)
         results = slice_alignments(alignment, index_pairs, min_length=min_length, max_gaps=max_gap_fraction)

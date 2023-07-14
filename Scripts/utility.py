@@ -7,6 +7,7 @@ Created on Thu Jul  6 14:10:16 2023
 """
 
 
+import sys
 import numpy as np
 import pandas as pd
 from Bio import AlignIO
@@ -25,8 +26,8 @@ strand_dict = {
     }
 
 
-def read_maf(filename):
-    handle = AlignIO.parse(open(filename, 'r'), format='maf')
+def read_maf(handle):
+    handle = AlignIO.parse(handle, format='maf')
     return handle
 
 
@@ -47,6 +48,14 @@ def load_bed(filename):
 def load_gtf(filename):
     df = pd.read_csv(filename, sep="\t", header=None, names=gtf_columns)
     return df
+
+
+def check_positional_argument(args):
+    if len(args) >= 1:
+        print(args)
+        return open(args[-1], 'r')
+    else:
+        return sys.stdin
 
 
 def sortRecords(records):
@@ -110,14 +119,18 @@ def max_gap_seqs(records, max_gaps=0, reference=True):
 def print_maf_alignment(alignment):
     if not alignment:
         return
-    print("\na")
-    for record in alignment:
-        print("s %s \t%s \t%s \t%s \t%s \t%s" % (record.id, 
-                                            record.annotations["start"], 
-                                            record.annotations["size"], 
-                                            strand_dict.get(record.annotations["strand"]), 
-                                            record.annotations["srcSize"],
-                                            record.seq))
+    try:
+        print("\na")
+        for record in alignment:
+            print("s %s \t%s \t%s \t%s \t%s \t%s" % (record.id, 
+                                                     record.annotations["start"], 
+                                                     record.annotations["size"], 
+                                                     strand_dict.get(record.annotations["strand"]), 
+                                                     record.annotations["srcSize"],
+                                                     record.seq))
+    except BrokenPipeError:
+        print("Broken pipe. Maybe check output of previous function?")
+        
         
 def alignments_to_stdout(alignments):
     for alignment in alignments:

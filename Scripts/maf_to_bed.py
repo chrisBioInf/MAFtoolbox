@@ -7,16 +7,7 @@ Created on Thu Feb  9 09:03:11 2023
 """
 
 
-import sys
-
-from utility import read_maf
-
-strand_dict = {
-    1: "+",
-    -1: "-",
-    "+": "+",
-    "-": "-",
-    }
+from utility import read_maf, check_positional_argument, strand_dict
 
 
 def maf_to_bed(fs, output):
@@ -26,10 +17,10 @@ def maf_to_bed(fs, output):
     score = []
     strands = []
     
-    handle = read_maf(fs)
+    alignment_handle = read_maf(fs)
     count = 0
     
-    for alignment in handle:
+    for alignment in alignment_handle:
         count += 1
         record = alignment[0]
         seqname.append(record.id)
@@ -59,13 +50,8 @@ def write_to_bed(parser):
     parser.add_option("-i","--input",action="store",type="string", dest="input",help="The (MAF) input file (Required).")
     parser.add_option("-o","--output",action="store",type="string", default="", dest="out_file",help="BED file to write to. If empty, coordinates are redirected to stdout.")
     options, args = parser.parse_args()
+    args = args[1:]
+    handle_ = check_positional_argument(args)
     
-    required = ["input"]
-    
-    for r in required:
-        if options.__dict__[r] == None:
-            print("You must pass a --%s argument." % r)
-            sys.exit()
-    
-    maf_to_bed(options.input, output=options.out_file)
+    maf_to_bed(handle_, output=options.out_file)
 

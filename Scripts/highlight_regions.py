@@ -8,10 +8,9 @@ Created on Tue Jul  4 11:10:29 2023
 
 
 import sys
-from Bio import AlignIO
 import pandas as pd
 
-from utility import strand_dict
+from utility import strand_dict, check_positional_argument, read_maf
 
 
 columns = ["sequence", "start", "end", "score", "strand", ]
@@ -23,11 +22,6 @@ colors_dict = {
     "YELLOW" : '\033[93m',
     "END" : '\033[0m',
 }
-
-
-def read_maf(filename):
-    handle = AlignIO.parse(open(filename, 'r'), format='maf')
-    return handle
 
 
 def load_bed_with_range(filename):
@@ -78,7 +72,6 @@ def print_highlighted_sequence(record, color_start_index, color_end_index,
 def print_highlighted_alignment(alignment, df, sense=0, antisense=0, color="GREEN", overhang_color="GREEN"):
     start = int(alignment[0].annotations["start"])
     size = int(alignment[0].annotations["size"])
-    # strand = strand_dict.get(alignment[0].annotations.get("strand"), "+")
     end = start + size
     start_end = set((x for x in range(start, end)))
     
@@ -137,14 +130,15 @@ def print_highlighted_alignment(alignment, df, sense=0, antisense=0, color="GREE
         
 def highlight_regions(parser):
     parser.add_option("-b","--bed",action="store", type="string", dest="bed", help="Bed file with genomic coordinates to extract (Required).")
-    parser.add_option("-m","--maf",action="store", type="string", dest="maf", help="MAF alignment file with coordinates corresponding to bed file (Required).")
     parser.add_option("-s", "--sense",action="store",type="int",dest="sense",default=0,help="Add a highlighted overhang of this many nucleotides in sense (+) direction of reference strand (Default: 0).")
     parser.add_option("-n", "--antisense",action="store",type="int",dest="antisense",default=0,help="Add a highlighted overhang of this many nucleotides in antisense (-) direction of reference strand (Default: 0).")
     parser.add_option("-c", "--color",action="store",type="string",dest="color",default="GREEN",help="Color for highlighting of annotated regions. Choose from %s (Default: GREEN)." % list(colors_dict.keys()))
     parser.add_option("-g", "--overhang-color",action="store",type="string",dest="overhang", default="",help="Color for highlighting of overhangs. Does nothing if overhangs are length 0 (Default: Same as --color).")
     options, args = parser.parse_args()
+    args = args[1:]
+    handle_ = check_positional_argument(args)
     
-    required = ["bed", "maf"]
+    required = ["bed", ]
     
     for r in required:
         if options.__dict__[r] == None:
@@ -164,9 +158,9 @@ def highlight_regions(parser):
             sys.exit()
     
     annotation = load_bed_with_range(options.bed)
-    handle = read_maf(options.maf)
+    alignment_handle = read_maf(handle_)
     
-    for alignment in handle:
+    for alignment in alignment_handle:
         name = alignment[0].id
         df_ = annotation[annotation["sequence"] == name]
         print_highlighted_alignment(alignment, df_, options.sense, options.antisense, options.color, overhang_color)

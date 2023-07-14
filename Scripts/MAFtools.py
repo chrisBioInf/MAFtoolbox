@@ -35,7 +35,7 @@ from highlight_regions import highlight_regions
 from trim_names import trim_ids    
 
 
-usage_statement = "Usage: MAFtools [program] [options], with program being one of 'blockmerge', 'mask', 'filter', 'extract', 'highlight', 'toBed', 'toGTF', 'trimNames'."
+usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'extract', 'highlight', 'toBed', 'toGTF', 'trimNames'."
 
 
 def main():

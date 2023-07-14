@@ -7,12 +7,11 @@ Created on Mon Jun 26 11:36:23 2023
 """
 
 
-import sys
 import numpy as np
 from difflib import SequenceMatcher
 from Bio.Align import MultipleSeqAlignment
 
-from utility import read_maf, write_maf, print_maf_alignment, eliminate_consensus_gaps, max_gap_seqs
+from utility import read_maf, write_maf, print_maf_alignment, eliminate_consensus_gaps, max_gap_seqs, check_positional_argument
 
 
 ignore_masks = True
@@ -81,25 +80,19 @@ def filter_records_by_similarity(alignment, options):
 
 
 def select_seqs(parser):
-    parser.add_option("-i","--input",action="store",type="string", dest="input",help="The (MAF) input file (Required).")
     parser.add_option("-o","--output",action="store",type="string", default="", dest="out_file",help="MAF file to write to. If empty, results alignments are redirected to stdout.")
     parser.add_option("-r", "--no-reference", action="store_false", default=True, dest="reference", help="Should the first sequence always be considered the reference? (Default: True)")
     parser.add_option("-p","--id-threshold",action="store", type="float", default=0.8, dest="id_threshold", help="No further sequences are removed from alignment if average pairwise identity to the consensus sequence is equal to or larger than this value (Default: 0.8).")
-    parser.add_option("-s","--min-seqs",action="store",type="int", default=6, dest="min_seqs", help="No further sequences will be removed if input alignment reaches this number or fewer sequences (Default: 6).")
+    parser.add_option("-m","--min-seqs",action="store",type="int", default=6, dest="min_seqs", help="No further sequences will be removed if input alignment reaches this number or fewer sequences (Default: 6).")
     parser.add_option("-g", "--max-gaps", action="store", default=0.9, type="float", dest="max_gaps", help="All sequences with a larger gap fraction than this value will be dropped (Default: 0.9).")
     options, args = parser.parse_args()
+    args = args[1:]
+    handle_ = check_positional_argument(args)
     
-    required = ["input"]
-    
-    for r in required:
-        if options.__dict__[r] == None:
-            print("You must pass a --%s argument." % r)
-            sys.exit()
-    
-    handle = read_maf(options.input)
+    alignment_handle = read_maf(handle_)
     output_alignments = []
     
-    for alignment in handle:
+    for alignment in alignment_handle:
         alignment = max_gap_seqs(alignment, max_gaps=options.max_gaps, reference=options.reference)
         alignment = filter_records_by_similarity(alignment, options)
         if len(alignment) > 1:
