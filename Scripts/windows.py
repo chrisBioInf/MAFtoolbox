@@ -13,7 +13,7 @@ from Bio.Align import MultipleSeqAlignment
 from copy import deepcopy
 
 from select_maf_sequences import similarity_score
-from utility import check_positional_argument, read_maf, print_maf_alignment
+from utility import check_positional_argument, read_maf, write_maf, print_maf_alignment
 
 
 def get_mean_gaps(records, length):
@@ -73,6 +73,8 @@ def slice_alignment(alignment, outfile, slide=40, length=120, min_id=0.25, min_s
             print_maf_alignment(MultipleSeqAlignment(window_records))
         else:
             result_windows.append(MultipleSeqAlignment(window_records))
+            
+    return result_windows
         
 
 def window(parser):
@@ -89,15 +91,24 @@ def window(parser):
     handle_ = check_positional_argument(args)
     
     alignment_handle = read_maf(handle_)
+    result_windows = []
+    
+    length = options.length
+    max_length = options.max_length
+    
+    if max_length < length:
+        max_length = length
     
     for alignment in alignment_handle:
-        slice_alignment(alignment, 
-                        outfile=options.out_file,
-                        slide=options.slide,
-                        length=options.length,
-                        min_id=options.min_id,
-                        min_seqs=options.min_seqs,
-                        max_gaps=options.max_gaps,
-                        max_length=options.max_length,
-                        min_length=options.min_length
-                        )
+        result_windows += slice_alignment(alignment, 
+                                         outfile=options.out_file,
+                                         slide=options.slide,
+                                         length=length,
+                                         min_id=options.min_id,
+                                         min_seqs=options.min_seqs,
+                                         max_gaps=options.max_gaps,
+                                         max_length=max_length,
+                                         min_length=options.min_length
+                                         )
+        if len(result_windows) > 0:
+            write_maf(result_windows, filename=options.out_file)
