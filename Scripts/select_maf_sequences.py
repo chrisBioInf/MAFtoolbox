@@ -94,6 +94,10 @@ def select_seqs(parser):
     
     for alignment in alignment_handle:
         alignment = max_gap_seqs(alignment, max_gaps=options.max_gaps, reference=options.reference)
+        
+        if not alignment:
+            continue
+        
         alignment = filter_records_by_similarity(alignment, options)
         if len(alignment) > 1:
             if options.out_file == "":

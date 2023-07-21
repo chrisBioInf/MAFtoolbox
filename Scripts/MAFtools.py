@@ -28,6 +28,7 @@ THIS_DIR = os.path.dirname(THIS_FILE)
 from wga_block_merger import merge
 from removeRepeats import mask_repeat_regions
 from select_maf_sequences import select_seqs
+from windows import window
 from maf_to_gtf import write_to_gtf
 from maf_to_bed import write_to_bed
 from extract_maf_by_coordinates import extract_alignment
@@ -35,7 +36,7 @@ from highlight_regions import highlight_regions
 from trim_names import trim_ids    
 
 
-usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'extract', 'highlight', 'toBed', 'toGTF', 'trimNames'."
+usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'window', 'extract', 'highlight', 'toBed', 'toGTF', 'trimNames'."
 
 
 def main():
@@ -51,6 +52,8 @@ def main():
         mask_repeat_regions(parser)
     elif args[1] == "filter":
         select_seqs(parser)
+    elif args[1] == "window":
+        window(parser)
     elif args[1] == "extract":
         extract_alignment(parser)
     elif args[1] == "highlight":

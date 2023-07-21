@@ -100,7 +100,13 @@ def extract_blocks(handle_, annotations, sense=0, antisense=0, output=""):
     alignment_handle = read_maf(handle_)
     
     for alignment in alignment_handle:
-        extracted_alignments = get_subblock(alignment, annotations, sense, antisense)
+        ref_id = str(alignment[0].id)
+        annotations_ = annotations[annotations["sequence"] == ref_id]
+        
+        if len(annotations_) == 0:
+            continue
+        
+        extracted_alignments = get_subblock(alignment, annotations_, sense, antisense)
         
         if output == "":
             alignments_to_stdout(extracted_alignments)

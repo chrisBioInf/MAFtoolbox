@@ -52,7 +52,6 @@ def load_gtf(filename):
 
 def check_positional_argument(args):
     if len(args) >= 1:
-        print(args)
         return open(args[-1], 'r')
     else:
         return sys.stdin
