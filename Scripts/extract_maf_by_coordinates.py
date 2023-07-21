@@ -102,6 +102,9 @@ def extract_blocks(handle_, annotations, sense=0, antisense=0, output=""):
     for alignment in alignment_handle:
         ref_id = str(alignment[0].id)
         annotations_ = annotations[annotations["sequence"] == ref_id]
+        # start = int(alignment[0].annotations["start"]) 
+        # end = start + int(alignment[0].annotations["size"])
+        # annotations_ = annotations_[(annotations_["start"] > end) | (annotations_["end"] < start )]
         
         if len(annotations_) == 0:
             continue
@@ -121,6 +124,7 @@ def extract_alignment(parser):
     parser.add_option("-s", "--sense",action="store",type="int",dest="sense",default=0,help="Add an overhang of this many nucleotides in sense (+) direction of reference strand (Default: 0).")
     parser.add_option("-n", "--antisense",action="store",type="int",dest="antisense",default=0,help="Add an overhang of this many nucleotides in antisense (-) direction of reference strand (Default: 0).")
     parser.add_option("-o","--output",action="store",type="string", default="", dest="output", help="MAF file to write to. If empty, results alignments are redirected to stdout.")
+    parser.add_option("-r", "--remove-duplicates",action="store_true",default=False,dest="remove_duplicates",help="Should identical coordinates be filtered out? ()")
     options, args = parser.parse_args()
     args = args[1:]
     handle_ = check_positional_argument(args)
@@ -133,8 +137,13 @@ def extract_alignment(parser):
             sys.exit()
             
     annotations = load_bed_with_range(options.bed)
+    
+    if options.remove_duplicates == True:
+        annotations.drop_duplicates(subset=["start", "end"], inplace=True)
+    
     extracted_blocks = extract_blocks(handle_, annotations, options.sense, options.antisense, options.output)
     
     if len(extracted_blocks) > 0:
         write_maf(extracted_blocks, options.output)
+        
     

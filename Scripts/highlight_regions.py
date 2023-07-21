@@ -31,7 +31,7 @@ def load_bed_with_range(filename):
     for i in range(0, len(df)):
         start = df["start"].iloc[i]
         end = df["end"].iloc[i]
-        ranges.append(set((x for x in range(start, end))))
+        ranges.append(frozenset((x for x in range(start, end))))
     
     df["range"] = ranges
     return df 
