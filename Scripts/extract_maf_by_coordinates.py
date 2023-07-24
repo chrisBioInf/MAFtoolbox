@@ -40,7 +40,7 @@ def get_subrecord(record, start, end):
     return new_record
 
 
-def get_subblock(alignment, df, sense, antisense):
+def get_subblock(alignment, df, sense, antisense, min_seqs):
     start = int(alignment[0].annotations["start"]) 
     size = int(alignment[0].annotations["size"])
     end = start + size
@@ -85,31 +85,40 @@ def get_subblock(alignment, df, sense, antisense):
         
         start_index = len(section1)
         end_index = len(section1) + len(extracted_section)
+        length = end_index - start_index
         
         for record in alignment:
             record_ = get_subrecord(record, start_index, end_index)
-            records.append(record_)
+            if record_.seq.count('-') < length:
+                records.append(record_)
         
-        alignments.append(MultipleSeqAlignment(records))
+        if len(records) >= min_seqs:
+            alignments.append(MultipleSeqAlignment(records))
     
     return alignments
 
 
-def extract_blocks(handle_, annotations, sense=0, antisense=0, output=""):
+def extract_blocks(handle_, annotation, sense=0, antisense=0, output="", subset=[], min_seqs=2):
     output_blocks = []
     alignment_handle = read_maf(handle_)
+    subsections = {}
+    
+    for name in annotation["sequence"].unique():
+        subsections[name] = annotation[annotation["sequence"] == name]
     
     for alignment in alignment_handle:
         ref_id = str(alignment[0].id)
-        annotations_ = annotations[annotations["sequence"] == ref_id]
-        # start = int(alignment[0].annotations["start"]) 
-        # end = start + int(alignment[0].annotations["size"])
-        # annotations_ = annotations_[(annotations_["start"] > end) | (annotations_["end"] < start )]
+        annotations_ = subsections.get(ref_id, [])
         
         if len(annotations_) == 0:
             continue
         
-        extracted_alignments = get_subblock(alignment, annotations_, sense, antisense)
+        if subset:
+            subset.add(ref_id.split(".")[0].lower())
+            alignment_ = [record for record in alignment if record.id.split(".")[0].lower() in subset]
+            extracted_alignments = get_subblock(alignment_, annotations_, sense, antisense, min_seqs)
+        else:
+            extracted_alignments = get_subblock(alignment, annotations_, sense, antisense, min_seqs)
         
         if output == "":
             alignments_to_stdout(extracted_alignments)
@@ -121,10 +130,12 @@ def extract_blocks(handle_, annotations, sense=0, antisense=0, output=""):
 
 def extract_alignment(parser):
     parser.add_option("-b","--bed",action="store", type="string", dest="bed", help="Bed file with genomic coordinates to extract (Required).")
+    parser.add_option("-u","--subset",action="store",type="string",dest="subset",default="",help="You may select sequences by entering a comma separated list of sequence names here (Example: Apis_mellifera,Bombus_terrestris). All other sequences will be discarded, but reference will always be kept.")
     parser.add_option("-s", "--sense",action="store",type="int",dest="sense",default=0,help="Add an overhang of this many nucleotides in sense (+) direction of reference strand (Default: 0).")
     parser.add_option("-n", "--antisense",action="store",type="int",dest="antisense",default=0,help="Add an overhang of this many nucleotides in antisense (-) direction of reference strand (Default: 0).")
     parser.add_option("-o","--output",action="store",type="string", default="", dest="output", help="MAF file to write to. If empty, results alignments are redirected to stdout.")
     parser.add_option("-r", "--remove-duplicates",action="store_true",default=False,dest="remove_duplicates",help="Should identical coordinates be filtered out? ()")
+    parser.add_option("-m","--min-seqs",action="store",type="int", default=2, dest="min_seqs", help="Only report blocks with at least this many remaining sequences. All-gap sequences will be dropped. (Default: 2).")
     options, args = parser.parse_args()
     args = args[1:]
     handle_ = check_positional_argument(args)
@@ -140,8 +151,13 @@ def extract_alignment(parser):
     
     if options.remove_duplicates == True:
         annotations.drop_duplicates(subset=["start", "end"], inplace=True)
+        
+    if options.subset != "":
+        subset = set(x.lower() for x in options.subset.split(","))
+    else:
+        subset = []
     
-    extracted_blocks = extract_blocks(handle_, annotations, options.sense, options.antisense, options.output)
+    extracted_blocks = extract_blocks(handle_, annotations, options.sense, options.antisense, options.output, subset, options.min_seqs)
     
     if len(extracted_blocks) > 0:
         write_maf(extracted_blocks, options.output)

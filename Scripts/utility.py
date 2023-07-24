@@ -11,6 +11,7 @@ import sys
 import numpy as np
 import pandas as pd
 from Bio import AlignIO
+from Bio import SeqIO
 from Bio.Seq import Seq
 
 
@@ -29,6 +30,10 @@ strand_dict = {
 def read_maf(handle):
     handle = AlignIO.parse(handle, format='maf')
     return handle
+
+
+def read_fasta(handle):
+    handle = SeqIO.parse(handle, format='fasta')
 
 
 def write_maf(records, filename):

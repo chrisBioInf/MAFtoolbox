@@ -33,10 +33,13 @@ def get_mean_id(records, ):
     return np.mean(pairwise_id)
 
 
-def slice_alignment(alignment, outfile, slide=40, length=120, min_id=0.25, min_seqs=2, max_gaps=0.5, max_length=120, min_length=60):
+def slice_alignment(alignment, outfile, slide=40, length=120, min_id=0.25, min_seqs=2, max_gaps=0.25, max_length=120, min_length=50):
     ref_seq = str(alignment[0].seq)
     n_columns = len(ref_seq)
     result_windows = []
+    
+    if (n_columns < min_length) or (alignment[0].annotations.get("size") < min_length):
+        return []
     
     if (n_columns <= max_length) or (n_columns <= length):
         if outfile == "":
@@ -63,7 +66,7 @@ def slice_alignment(alignment, outfile, slide=40, length=120, min_id=0.25, min_s
             
             if record_.annotations["size"] == 0:
                 continue
-            
+
             window_records.append(record_)
         
         if (len(window_records) < min_seqs) or (get_mean_gaps(window_records, length) > max_gaps) or (get_mean_id(window_records) < min_id):
@@ -81,11 +84,11 @@ def window(parser):
     parser.add_option("-o","--output",action="store",type="string", default="", dest="out_file",help="MAF file to write to. If empty, results alignments are redirected to stdout.")
     parser.add_option("-s","--slide",action="store",type="int", default=40, dest="slide",help="Length of each slice step (Default: 40).")
     parser.add_option("-l","--length",action="store",type="int", default=120, dest="length",help="Length of each window (Default: 120).")
-    parser.add_option("-m","--min-id",action="store",type="int", default=0.25, dest="min_id",help="Minimal mean pairwise identity (without gaps) for keeping resulting alignments, others will be dropped (Default: 0.25).")
+    parser.add_option("-m","--min-id",action="store",type="int", default=0.5, dest="min_id",help="Minimal mean pairwise identity (without gaps) for keeping resulting alignments, others will be dropped (Default: 0.5).")
     parser.add_option("-e","--min-seqs",action="store",type="int", default=2, dest="min_seqs",help="Minimal number of sequences in resulting alignments, those with fewer will be dropped (Default: 2).")
-    parser.add_option("-g", "--max-gaps", action="store", default=0.5, type="float", dest="max_gaps", help="Maximum fraction of gaps in resulting alignments (Default: 0.5).")
+    parser.add_option("-g", "--max-gaps", action="store", default=0.25, type="float", dest="max_gaps", help="Maximum fraction of gaps in resulting alignments (Default: 0.25).")
     parser.add_option("-a","--max-length",action="store",type="int", default=120, dest="max_length",help="Slice only alignments longer than this value, others will be left as they are (Default: 120).")
-    parser.add_option("-i","--min-length",action="store",type="int", default=120, dest="min_length",help="Leftover windows shorter than this will be discarded (Default: 60).")
+    parser.add_option("-i","--min-length",action="store",type="int", default=50, dest="min_length",help="Windows shorter than this will be discarded (Default: 50).")
     options, args = parser.parse_args()
     args = args[1:]
     handle_ = check_positional_argument(args)
@@ -110,5 +113,5 @@ def window(parser):
                                          max_length=max_length,
                                          min_length=options.min_length
                                          )
-        if len(result_windows) > 0:
-            write_maf(result_windows, filename=options.out_file)
+    if len(result_windows) > 0:
+        write_maf(result_windows, filename=options.out_file)

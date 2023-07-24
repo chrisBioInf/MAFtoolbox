@@ -47,36 +47,32 @@ def filter_records_by_similarity(alignment, options):
     keep_reference = options.reference
     id_threshold = options.id_threshold
     min_seqs = options.min_seqs
-    current_records = [record for record in alignment]
     
     if len(alignment) < 3:
-        return alignment
+        return MultipleSeqAlignment(alignment)
     
-    alignment_discarded = False
     alignment_finalized = False
     
     while not alignment_finalized:
-        consensus_seq = calculate_consensus_sequence(current_records)
-        similarity_column = [similarity_score(record.seq, consensus_seq) for record in current_records]
+        if len(alignment) <= min_seqs:
+            alignment_finalized = True
+            continue
+        
+        consensus_seq = calculate_consensus_sequence(alignment)
+        similarity_column = [similarity_score(record.seq, consensus_seq) for record in alignment]
+        
+        if np.mean(similarity_column) > id_threshold:
+            alignment_finalized = True
+            continue
         
         minimal_indices = sorted(np.argpartition(similarity_column, 2)[:2])
         minimal_index = minimal_indices[0]
         if keep_reference and (minimal_index == 0):
             minimal_index = minimal_indices[1]
-        current_records.pop(minimal_index)
-        
-        if len(current_records) <= min_seqs:
-            alignment_finalized = True
-            
-        if np.mean(similarity_column) > id_threshold:
-            alignment_finalized = True
-            
-        current_records = eliminate_consensus_gaps(current_records)
-        
-    if alignment_discarded:
-        return MultipleSeqAlignment([alignment[0]])
+        alignment.pop(minimal_index)
+        alignment = eliminate_consensus_gaps(alignment)
     
-    return MultipleSeqAlignment(current_records)
+    return MultipleSeqAlignment(alignment)
 
 
 def select_seqs(parser):
@@ -97,7 +93,6 @@ def select_seqs(parser):
         
         if not alignment:
             continue
-        
         alignment = filter_records_by_similarity(alignment, options)
         if len(alignment) > 1:
             if options.out_file == "":

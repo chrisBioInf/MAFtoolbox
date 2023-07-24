@@ -33,10 +33,11 @@ from maf_to_gtf import write_to_gtf
 from maf_to_bed import write_to_bed
 from extract_maf_by_coordinates import extract_alignment
 from highlight_regions import highlight_regions
+from fill_sequences import seqfill
 from trim_names import trim_ids    
 
 
-usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'window', 'select', 'highlight', 'toBed', 'toGTF', 'trimNames'."
+usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'window', 'select', 'highlight', 'fill', 'toBed', 'toGTF', 'trimNames'."
 
 
 def main():
@@ -62,6 +63,8 @@ def main():
         write_to_bed(parser)
     elif args[1] == "toGTF":
         write_to_gtf(parser)
+    elif args[1] == "fill":
+        seqfill(parser)
     elif args[1] == "trimNames":
         trim_ids(parser)
     else:

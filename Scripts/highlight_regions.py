@@ -159,9 +159,13 @@ def highlight_regions(parser):
     
     annotation = load_bed_with_range(options.bed)
     alignment_handle = read_maf(handle_)
+    subsections = {}
+    
+    for name in annotation["sequence"].unique():
+        subsections[name] = annotation[annotation["sequence"] == name]
     
     for alignment in alignment_handle:
         name = alignment[0].id
-        df_ = annotation[annotation["sequence"] == name]
+        df_ = subsections.get(name, [])
         print_highlighted_alignment(alignment, df_, options.sense, options.antisense, options.color, overhang_color)
 

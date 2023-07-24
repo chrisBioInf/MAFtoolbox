@@ -7,7 +7,6 @@ Created on Tue Mar 14 09:52:16 2023
 """
 
 
-import sys
 from Bio import Seq
 import numpy as np
 
@@ -105,8 +104,8 @@ def check_block_viability(block1, block2, species_consensus_threshold, block_dis
     merge_flag = True
     reference1 = block1[0]
     reference2 = block2[0]
-    start1, end1 = reference1.annotations["start"], reference1.annotations["start"] + reference1.annotations["size"]
-    start2, end2 = reference2.annotations["start"], reference2.annotations["start"] + reference2.annotations["size"]
+    end1 = reference1.annotations["start"] + reference1.annotations["size"]
+    start2 = reference2.annotations["start"]
     consensus_species, consensus_score = local_species_consensus(block1, block2)
     
     if coordinate_distance(end1, start2) > block_distance_threshold:
@@ -143,10 +142,10 @@ def merge(parser):
     merged_blocks_n = []
     local_merges = 1
     
-    while block1 != None:
+    while block1:
         block2 = next(alignments, None)
         
-        if block2 == None:
+        if not block2:
             records = eliminate_consensus_gaps(block1)
             records = max_gap_seqs(records, options.max_gaps, options.reference)
             merged_blocks_n.append(local_merges)
