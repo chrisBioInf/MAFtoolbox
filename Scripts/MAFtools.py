@@ -35,6 +35,7 @@ from extract_maf_by_coordinates import extract_alignment
 from highlight_regions import highlight_regions
 from fill_sequences import seqfill
 from trim_names import trim_ids    
+from psl2bed import psl_to_bed
 
 
 usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'window', 'select', 'highlight', 'fill', 'toBed', 'toGTF', 'trimNames'."
@@ -67,6 +68,8 @@ def main():
         seqfill(parser)
     elif args[1] == "trimNames":
         trim_ids(parser)
+    elif args[1] == "psl2bed":
+        psl_to_bed(parser)
     else:
         print(usage_statement)
         sys.exit()
