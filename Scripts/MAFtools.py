@@ -38,7 +38,7 @@ from trim_names import trim_ids
 from psl2bed import psl_to_bed
 
 
-usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'window', 'select', 'highlight', 'fill', 'toBed', 'toGTF', 'trimNames'."
+usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'window', 'select', 'highlight', 'fill', 'toBed', 'toGTF', 'psl2bed', 'trimNames'."
 
 
 def main():

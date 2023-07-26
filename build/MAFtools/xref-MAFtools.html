@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>modulegraph cross reference for MAFtools.py, extract_maf_by_coordinates.py, highlight_regions.py, maf_to_bed.py, maf_to_gtf.py, pyi_rth_inspect.py, pyi_rth_multiprocessing.py, pyi_rth_pkgres.py, pyi_rth_pkgutil.py, removeRepeats.py, select_maf_sequences.py, trim_names.py, utility.py, wga_block_merger.py</title>
+    <title>modulegraph cross reference for MAFtools.py, extract_maf_by_coordinates.py, fill_sequences.py, highlight_regions.py, maf_to_bed.py, maf_to_gtf.py, psl2bed.py, pyi_rth_inspect.py, pyi_rth_multiprocessing.py, pyi_rth_pkgres.py, pyi_rth_pkgutil.py, removeRepeats.py, select_maf_sequences.py, trim_names.py, utility.py, wga_block_merger.py, windows.py</title>
     <style>
       .node { padding: 0.5em 0 0.5em; border-top: thin grey dotted; }
       .moduletype { font: smaller italic }
@@ -11,7 +11,7 @@
     </style>
   </head>
   <body>
-    <h1>modulegraph cross reference for MAFtools.py, extract_maf_by_coordinates.py, highlight_regions.py, maf_to_bed.py, maf_to_gtf.py, pyi_rth_inspect.py, pyi_rth_multiprocessing.py, pyi_rth_pkgres.py, pyi_rth_pkgutil.py, removeRepeats.py, select_maf_sequences.py, trim_names.py, utility.py, wga_block_merger.py</h1>
+    <h1>modulegraph cross reference for MAFtools.py, extract_maf_by_coordinates.py, fill_sequences.py, highlight_regions.py, maf_to_bed.py, maf_to_gtf.py, psl2bed.py, pyi_rth_inspect.py, pyi_rth_multiprocessing.py, pyi_rth_pkgres.py, pyi_rth_pkgutil.py, removeRepeats.py, select_maf_sequences.py, trim_names.py, utility.py, wga_block_merger.py, windows.py</h1>
 
 <div class="node">
   <a name="MAFtools.py"></a>
@@ -151,6 +151,8 @@ imports:
  &#8226;   <a href="#enum">enum</a>
  &#8226;   <a href="#extract_maf_by_coordinates">extract_maf_by_coordinates</a>
  &#8226;   <a href="#extract_maf_by_coordinates.py">extract_maf_by_coordinates.py</a>
+ &#8226;   <a href="#fill_sequences">fill_sequences</a>
+ &#8226;   <a href="#fill_sequences.py">fill_sequences.py</a>
  &#8226;   <a href="#fnmatch">fnmatch</a>
  &#8226;   <a href="#functools">functools</a>
  &#8226;   <a href="#genericpath">genericpath</a>
@@ -171,6 +173,8 @@ imports:
  &#8226;   <a href="#os">os</a>
  &#8226;   <a href="#pathlib">pathlib</a>
  &#8226;   <a href="#posixpath">posixpath</a>
+ &#8226;   <a href="#psl2bed">psl2bed</a>
+ &#8226;   <a href="#psl2bed.py">psl2bed.py</a>
  &#8226;   <a href="#pyi_rth_inspect.py">pyi_rth_inspect.py</a>
  &#8226;   <a href="#pyi_rth_multiprocessing.py">pyi_rth_multiprocessing.py</a>
  &#8226;   <a href="#pyi_rth_pkgres.py">pyi_rth_pkgres.py</a>
@@ -204,6 +208,7 @@ imports:
  &#8226;   <a href="#wga_block_merger">wga_block_merger</a>
  &#8226;   <a href="#wga_block_merger.py">wga_block_merger.py</a>
  &#8226;   <a href="#windows">windows</a>
+ &#8226;   <a href="#windows.py">windows.py</a>
 
   </div>
 
@@ -218,6 +223,26 @@ imports:
  &#8226;   <a href="#Bio.Seq">Bio.Seq</a>
  &#8226;   <a href="#copy">copy</a>
  &#8226;   <a href="#highlight_regions">highlight_regions</a>
+ &#8226;   <a href="#sys">sys</a>
+ &#8226;   <a href="#utility">utility</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#MAFtools.py">MAFtools.py</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="fill_sequences.py"></a>
+  <a target="code" href="/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAFtoolbox/Scripts/fill_sequences.py" type="text/plain"><tt>fill_sequences.py</tt></a>
+<span class="moduletype">Script</span>  <div class="import">
+imports:
+    <a href="#Bio.Align">Bio.Align</a>
+ &#8226;   <a href="#Bio.Seq">Bio.Seq</a>
+ &#8226;   <a href="#copy">copy</a>
  &#8226;   <a href="#sys">sys</a>
  &#8226;   <a href="#utility">utility</a>
 
@@ -269,7 +294,25 @@ imported by:
   <a target="code" href="/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAFtoolbox/Scripts/maf_to_gtf.py" type="text/plain"><tt>maf_to_gtf.py</tt></a>
 <span class="moduletype">Script</span>  <div class="import">
 imports:
-    <a href="#utility">utility</a>
+    <a href="#maf_to_bed">maf_to_bed</a>
+ &#8226;   <a href="#utility">utility</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#MAFtools.py">MAFtools.py</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="psl2bed.py"></a>
+  <a target="code" href="/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAFtoolbox/Scripts/psl2bed.py" type="text/plain"><tt>psl2bed.py</tt></a>
+<span class="moduletype">Script</span>  <div class="import">
+imports:
+    <a href="#pandas">pandas</a>
+ &#8226;   <a href="#utility">utility</a>
 
   </div>
   <div class="import">
@@ -426,6 +469,7 @@ imports:
     <a href="#Bio">Bio</a>
  &#8226;   <a href="#Bio.AlignIO">Bio.AlignIO</a>
  &#8226;   <a href="#Bio.Seq">Bio.Seq</a>
+ &#8226;   <a href="#Bio.SeqIO">Bio.SeqIO</a>
  &#8226;   <a href="#numpy">numpy</a>
  &#8226;   <a href="#pandas">pandas</a>
  &#8226;   <a href="#sys">sys</a>
@@ -447,7 +491,27 @@ imports:
     <a href="#Bio">Bio</a>
  &#8226;   <a href="#Bio.Seq">Bio.Seq</a>
  &#8226;   <a href="#numpy">numpy</a>
- &#8226;   <a href="#sys">sys</a>
+ &#8226;   <a href="#utility">utility</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#MAFtools.py">MAFtools.py</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="windows.py"></a>
+  <a target="code" href="/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAFtoolbox/Scripts/windows.py" type="text/plain"><tt>windows.py</tt></a>
+<span class="moduletype">Script</span>  <div class="import">
+imports:
+    <a href="#Bio.Align">Bio.Align</a>
+ &#8226;   <a href="#Bio.Seq">Bio.Seq</a>
+ &#8226;   <a href="#copy">copy</a>
+ &#8226;   <a href="#numpy">numpy</a>
+ &#8226;   <a href="#select_maf_sequences">select_maf_sequences</a>
  &#8226;   <a href="#utility">utility</a>
 
   </div>
@@ -937,11 +1001,14 @@ imported by:
  &#8226;   <a href="#Bio.SeqIO">Bio.SeqIO</a>
  &#8226;   <a href="#extract_maf_by_coordinates">extract_maf_by_coordinates</a>
  &#8226;   <a href="#extract_maf_by_coordinates.py">extract_maf_by_coordinates.py</a>
+ &#8226;   <a href="#fill_sequences">fill_sequences</a>
+ &#8226;   <a href="#fill_sequences.py">fill_sequences.py</a>
  &#8226;   <a href="#removeRepeats">removeRepeats</a>
  &#8226;   <a href="#removeRepeats.py">removeRepeats.py</a>
  &#8226;   <a href="#select_maf_sequences">select_maf_sequences</a>
  &#8226;   <a href="#select_maf_sequences.py">select_maf_sequences.py</a>
  &#8226;   <a href="#windows">windows</a>
+ &#8226;   <a href="#windows.py">windows.py</a>
 
   </div>
 
@@ -2441,6 +2508,8 @@ imported by:
  &#8226;   <a href="#BioSQL.BioSeq">BioSQL.BioSeq</a>
  &#8226;   <a href="#extract_maf_by_coordinates">extract_maf_by_coordinates</a>
  &#8226;   <a href="#extract_maf_by_coordinates.py">extract_maf_by_coordinates.py</a>
+ &#8226;   <a href="#fill_sequences">fill_sequences</a>
+ &#8226;   <a href="#fill_sequences.py">fill_sequences.py</a>
  &#8226;   <a href="#removeRepeats">removeRepeats</a>
  &#8226;   <a href="#removeRepeats.py">removeRepeats.py</a>
  &#8226;   <a href="#utility">utility</a>
@@ -2448,6 +2517,7 @@ imported by:
  &#8226;   <a href="#wga_block_merger">wga_block_merger</a>
  &#8226;   <a href="#wga_block_merger.py">wga_block_merger.py</a>
  &#8226;   <a href="#windows">windows</a>
+ &#8226;   <a href="#windows.py">windows.py</a>
 
   </div>
 
@@ -2547,6 +2617,8 @@ imported by:
  &#8226;   <a href="#Bio.SeqIO._index">Bio.SeqIO._index</a>
  &#8226;   <a href="#Bio.SeqIO._twoBitIO">Bio.SeqIO._twoBitIO</a>
  &#8226;   <a href="#Bio.SeqRecord">Bio.SeqRecord</a>
+ &#8226;   <a href="#utility">utility</a>
+ &#8226;   <a href="#utility.py">utility.py</a>
 
   </div>
 
@@ -6564,6 +6636,8 @@ imported by:
  &#8226;   <a href="#email.generator">email.generator</a>
  &#8226;   <a href="#extract_maf_by_coordinates">extract_maf_by_coordinates</a>
  &#8226;   <a href="#extract_maf_by_coordinates.py">extract_maf_by_coordinates.py</a>
+ &#8226;   <a href="#fill_sequences">fill_sequences</a>
+ &#8226;   <a href="#fill_sequences.py">fill_sequences.py</a>
  &#8226;   <a href="#gettext">gettext</a>
  &#8226;   <a href="#http.cookiejar">http.cookiejar</a>
  &#8226;   <a href="#http.server">http.server</a>
@@ -6588,6 +6662,7 @@ imported by:
  &#8226;   <a href="#weakref">weakref</a>
  &#8226;   <a href="#webbrowser">webbrowser</a>
  &#8226;   <a href="#windows">windows</a>
+ &#8226;   <a href="#windows.py">windows.py</a>
  &#8226;   <a href="#xml.dom.xmlbuilder">xml.dom.xmlbuilder</a>
  &#8226;   <a href="#xml.etree.ElementInclude">xml.etree.ElementInclude</a>
 
@@ -10366,6 +10441,26 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="fill_sequences"></a>
+  <a target="code" href="/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAFtoolbox/Scripts/fill_sequences.py" type="text/plain"><tt>fill_sequences</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#Bio.Align">Bio.Align</a>
+ &#8226;   <a href="#Bio.Seq">Bio.Seq</a>
+ &#8226;   <a href="#copy">copy</a>
+ &#8226;   <a href="#sys">sys</a>
+ &#8226;   <a href="#utility">utility</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#MAFtools.py">MAFtools.py</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="fnmatch"></a>
   <a target="code" href="/home/christopher/mambaforge/envs/MAFtools/lib/python3.9/fnmatch.py" type="text/plain"><tt>fnmatch</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
@@ -11806,6 +11901,8 @@ imports:
   <div class="import">
 imported by:
     <a href="#MAFtools.py">MAFtools.py</a>
+ &#8226;   <a href="#maf_to_gtf">maf_to_gtf</a>
+ &#8226;   <a href="#maf_to_gtf.py">maf_to_gtf.py</a>
 
   </div>
 
@@ -11816,7 +11913,8 @@ imported by:
   <a target="code" href="/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAFtoolbox/Scripts/maf_to_gtf.py" type="text/plain"><tt>maf_to_gtf</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
-    <a href="#utility">utility</a>
+    <a href="#maf_to_bed">maf_to_bed</a>
+ &#8226;   <a href="#utility">utility</a>
 
   </div>
   <div class="import">
@@ -13217,6 +13315,7 @@ imported by:
  &#8226;   <a href="#wga_block_merger">wga_block_merger</a>
  &#8226;   <a href="#wga_block_merger.py">wga_block_merger.py</a>
  &#8226;   <a href="#windows">windows</a>
+ &#8226;   <a href="#windows.py">windows.py</a>
 
   </div>
 
@@ -18486,6 +18585,8 @@ imported by:
  &#8226;   <a href="#pandas.tseries">pandas.tseries</a>
  &#8226;   <a href="#pandas.util">pandas.util</a>
  &#8226;   <a href="#pandas.util._exceptions">pandas.util._exceptions</a>
+ &#8226;   <a href="#psl2bed">psl2bed</a>
+ &#8226;   <a href="#psl2bed.py">psl2bed.py</a>
  &#8226;   <a href="#utility">utility</a>
  &#8226;   <a href="#utility.py">utility.py</a>
 
@@ -31371,6 +31472,23 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="psl2bed"></a>
+  <a target="code" href="/home/christopher/Development/phD/Projects/WGA_Block_Merging/MAFtoolbox/Scripts/psl2bed.py" type="text/plain"><tt>psl2bed</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#pandas">pandas</a>
+ &#8226;   <a href="#utility">utility</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#MAFtools.py">MAFtools.py</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="psutil"></a>
   <a target="code" href="" type="text/plain"><tt>psutil</tt></a>
 <span class="moduletype">MissingModule</span>  <div class="import">
@@ -32099,6 +32217,7 @@ imports:
 imported by:
     <a href="#MAFtools.py">MAFtools.py</a>
  &#8226;   <a href="#windows">windows</a>
+ &#8226;   <a href="#windows.py">windows.py</a>
 
   </div>
 
@@ -32846,6 +32965,8 @@ imported by:
  &#8226;   <a href="#enum">enum</a>
  &#8226;   <a href="#extract_maf_by_coordinates">extract_maf_by_coordinates</a>
  &#8226;   <a href="#extract_maf_by_coordinates.py">extract_maf_by_coordinates.py</a>
+ &#8226;   <a href="#fill_sequences">fill_sequences</a>
+ &#8226;   <a href="#fill_sequences.py">fill_sequences.py</a>
  &#8226;   <a href="#fractions">fractions</a>
  &#8226;   <a href="#ftplib">ftplib</a>
  &#8226;   <a href="#getopt">getopt</a>
@@ -32994,8 +33115,6 @@ imported by:
  &#8226;   <a href="#warnings">warnings</a>
  &#8226;   <a href="#weakref">weakref</a>
  &#8226;   <a href="#webbrowser">webbrowser</a>
- &#8226;   <a href="#wga_block_merger">wga_block_merger</a>
- &#8226;   <a href="#wga_block_merger.py">wga_block_merger.py</a>
  &#8226;   <a href="#xml.dom.domreg">xml.dom.domreg</a>
  &#8226;   <a href="#xml.etree.ElementTree">xml.etree.ElementTree</a>
  &#8226;   <a href="#xml.parsers.expat">xml.parsers.expat</a>
@@ -34285,6 +34404,7 @@ imports:
     <a href="#Bio">Bio</a>
  &#8226;   <a href="#Bio.AlignIO">Bio.AlignIO</a>
  &#8226;   <a href="#Bio.Seq">Bio.Seq</a>
+ &#8226;   <a href="#Bio.SeqIO">Bio.SeqIO</a>
  &#8226;   <a href="#numpy">numpy</a>
  &#8226;   <a href="#pandas">pandas</a>
  &#8226;   <a href="#sys">sys</a>
@@ -34294,12 +34414,16 @@ imports:
 imported by:
     <a href="#extract_maf_by_coordinates">extract_maf_by_coordinates</a>
  &#8226;   <a href="#extract_maf_by_coordinates.py">extract_maf_by_coordinates.py</a>
+ &#8226;   <a href="#fill_sequences">fill_sequences</a>
+ &#8226;   <a href="#fill_sequences.py">fill_sequences.py</a>
  &#8226;   <a href="#highlight_regions">highlight_regions</a>
  &#8226;   <a href="#highlight_regions.py">highlight_regions.py</a>
  &#8226;   <a href="#maf_to_bed">maf_to_bed</a>
  &#8226;   <a href="#maf_to_bed.py">maf_to_bed.py</a>
  &#8226;   <a href="#maf_to_gtf">maf_to_gtf</a>
  &#8226;   <a href="#maf_to_gtf.py">maf_to_gtf.py</a>
+ &#8226;   <a href="#psl2bed">psl2bed</a>
+ &#8226;   <a href="#psl2bed.py">psl2bed.py</a>
  &#8226;   <a href="#removeRepeats">removeRepeats</a>
  &#8226;   <a href="#removeRepeats.py">removeRepeats.py</a>
  &#8226;   <a href="#select_maf_sequences">select_maf_sequences</a>
@@ -34309,6 +34433,7 @@ imported by:
  &#8226;   <a href="#wga_block_merger">wga_block_merger</a>
  &#8226;   <a href="#wga_block_merger.py">wga_block_merger.py</a>
  &#8226;   <a href="#windows">windows</a>
+ &#8226;   <a href="#windows.py">windows.py</a>
 
   </div>
 
@@ -34666,7 +34791,6 @@ imports:
     <a href="#Bio">Bio</a>
  &#8226;   <a href="#Bio.Seq">Bio.Seq</a>
  &#8226;   <a href="#numpy">numpy</a>
- &#8226;   <a href="#sys">sys</a>
  &#8226;   <a href="#utility">utility</a>
 
   </div>
