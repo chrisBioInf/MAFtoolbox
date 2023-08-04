@@ -1,4 +1,4 @@
-# MAF-block-merger
+# MAFtoolbox
 
 A bioinformatics utility tool box that implements a number of programs for operations on (genome) alignments 
 in Multiple Alignment Format. 
