@@ -23,7 +23,7 @@ def trim_ids(parser):
     
     for alignment in alignment_handle:
         record = deepcopy(alignment)
-        name = str(alignment[0].id).split(".")[1] + ".1"
+        name = str(alignment[0].id).split(".")[-2] + ".1"
         record[0].id = name
         
         if options.out_file == "":
