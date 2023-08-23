@@ -13,7 +13,7 @@ import pandas as pd
 from utility import strand_dict, check_positional_argument, read_maf
 
 
-columns = ["sequence", "start", "end", "score", "strand", ]
+columns = ["sequence", "start", "end", '.', '..']
 
 colors_dict = {
     "BLUE" : '\033[94m',
@@ -25,7 +25,7 @@ colors_dict = {
 
 
 def load_bed_with_range(filename):
-    df = pd.read_csv(filename, sep="\t", header=None, names=columns)
+    df = pd.read_csv(filename, sep="\t", header=None, names=columns, index_col=False)
     ranges = []
     
     for i in range(0, len(df)):

@@ -36,9 +36,10 @@ from highlight_regions import highlight_regions
 from fill_sequences import seqfill
 from trim_names import trim_ids    
 from psl2bed import psl_to_bed
+from toFasta import maf_to_fasta
 
 
-usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'blockmerge', 'mask', 'filter', 'window', 'select', 'highlight', 'fill', 'toBed', 'toGTF', 'psl2bed', 'trimNames'."
+usage_statement = "Usage: MAFtools [program] [options] [MAF file], with program being one of 'merge', 'ungap', 'filter', 'window', 'select', 'highlight', 'fill', 'toBed', 'toGTF', 'toFasta', 'psl2bed', 'trimNames'."
 
 
 def main():
@@ -48,9 +49,9 @@ def main():
     if len(args) < 2:
         print(usage_statement)
         sys.exit()
-    if args[1] == "blockmerge":
+    if args[1] == "merge":
         merge(parser)
-    elif args[1] == "mask":
+    elif args[1] == "ungap":
         mask_repeat_regions(parser)
     elif args[1] == "filter":
         select_seqs(parser)
@@ -70,6 +71,8 @@ def main():
         trim_ids(parser)
     elif args[1] == "psl2bed":
         psl_to_bed(parser)
+    elif args[1] == "toFasta":
+        maf_to_fasta(parser)
     else:
         print(usage_statement)
         sys.exit()

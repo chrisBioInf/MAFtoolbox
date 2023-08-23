@@ -76,26 +76,40 @@ def merge_blocks(block1, block2, reference=True, offset_threshold=0):
     block2_records = [record for record in block2 if record.id in consensus_blocks]
     sortRecords(block1_records)
     sortRecords(block2_records)
-    
+
     merged_records = []
-    offsets = []
-    
+    offsets = [coordinate_distance(block1_records[i].annotations["start"] + block1_records[i].annotations["size"], block2_records[i].annotations["start"]) for i in range(0, len(block1_records))]
+    block1_merge = []
+    block2_merge = []
+     
     for i in range(0, len(block1_records)):
-        offsets.append( coordinate_distance(block1_records[i].annotations["start"] + block1_records[i].annotations["size"],
-                                            block2_records[i].annotations["start"] ))
-    max_offset = max(offsets)
-    
-    for i in range(0, len(block1_records)):
+        offset = offsets[i]
         record_, record2 = block1_records[i], block2_records[i]
         strand1, strand2 = record_.annotations["strand"], record2.annotations["strand"]
         start1, end1 = record_.annotations["start"], record_.annotations["start"] + record_.annotations["size"]
         start2, end2 = record2.annotations["start"], record2.annotations["start"] + record2.annotations["size"]
-        offset = offsets[i]
-        if ((offset > offset_threshold) or (strand1 != strand2)):
+        if (offset < 0):
             continue
+        if (offset > offset_threshold) or (strand1 != strand2):
+            continue
+        block1_merge.append(record_)
+        block2_merge.append(record2)
+
+    offsets = [coordinate_distance(block1_merge[i].annotations["start"] + block1_merge[i].annotations["size"], block2_merge[i].annotations["start"]) for i in range(0, len(block1_merge))]
+
+    if len(offsets) < 2:
+        print_maf_alignment(block1)
+        return block2
+
+    max_offset = max(offsets)
+    index = 0
+
+    for (record_, record2) in zip(block1_merge, block2_merge):
+        offset = offsets[index]
         record_.seq = concat_with_bridge(record_.seq, record2.seq, offset, max_offset)
         record_.annotations["size"] = (end1 - start1) + offset + (end2 - start2)
         merged_records.append(record_)
+        index += 1
     
     return merged_records
 
@@ -107,6 +121,19 @@ def check_block_viability(block1, block2, species_consensus_threshold, block_dis
     end1 = reference1.annotations["start"] + reference1.annotations["size"]
     start2 = reference2.annotations["start"]
     consensus_species, consensus_score = local_species_consensus(block1, block2)
+
+    def check_distance_viability(block1, block2):
+        end1_dict = {r.id : (r.annotations.get('start') + r.annotations.get('size')) for r in block1}
+        start2_dict = {r.id : r.annotations.get('start') for r in block2}
+        viable_records = []
+
+        for name in end1_dict.keys():
+            distance = start2_dict.get(name, 0) - end1_dict.get(name)
+            if (distance >= 0) and (distance <= block_distance_threshold):
+                viable_records.append(name)
+
+        return len(viable_records) / len(block1)
+
     
     if coordinate_distance(end1, start2) > block_distance_threshold:
         merge_flag = False
@@ -120,6 +147,8 @@ def check_block_viability(block1, block2, species_consensus_threshold, block_dis
         merge_flag = False
     elif reference1.id != reference2.id:
         merge_flag = False
+    # elif check_distance_viability(block1, block2) < species_consensus_threshold:
+    #    merge_flag = False
          
     return merge_flag
 
@@ -176,5 +205,4 @@ def merge(parser):
 
     if options.out_file != "":
         write_maf(merged_alignments, options.out_file)
-    
-    
+     

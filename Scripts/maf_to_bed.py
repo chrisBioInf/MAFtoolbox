@@ -26,9 +26,18 @@ def maf_to_bed(fs, output, cluster):
     alignment_handle = read_maf(fs)
     count = 0
     
-    if cluster == False:
+    if (cluster == False):
         for alignment in alignment_handle:
             count += 1
+            record = alignment[0]
+            if (output == ''):
+                line = "%s\t%s\t%s\t%s\t%s" % (
+                    record.id, record.annotations.get('start'), 
+                    record.annotations.get("start") + record.annotations.get("size"), 
+                    '.', record.annotations.get("strand"),
+                    )
+                print(line)
+                continue
             record = alignment[0]
             seqname.append(record.id)
             starts.append(record.annotations.get("start"))
@@ -54,23 +63,30 @@ def maf_to_bed(fs, output, cluster):
             
             if (record.id == seqname[-1]) and (strand == strands[-1]) and coordinate_overlap(ends[-1], start, end):
                 ends[-1] = end
+                if (output == ''):
+                    line = "%s\t%s\t%s\t%s\t%s" % (
+                    seqname[-1], starts[-1],
+                    end,
+                    '.', strand,
+                    )
+                print(line)
                 continue
             
-            seqname.append(record.id)
-            starts.append(start)
-            ends.append(end)
-            score.append(".")
-            strands.append(strand)
-            count += 1
+            if (output == ''):
+                line = "%s\t%s\t%s\t%s\t%s" % (
+                    record.id, start, end,
+                    '.', strand,
+                    )
+                print(line)
+            else:
+                seqname.append(record.id)
+                starts.append(start)
+                ends.append(end)
+                score.append(".")
+                strands.append(strand)
+                count += 1
     
-    if output == "":
-        for i in range(0, count):
-            line = "%s\t%s\t%s\t%s\t%s" % (
-                seqname[i], starts[i], ends[i], 
-                score[i], strands[i],
-                )
-            print(line)
-    else:
+    if (output != ''):
         with open(output, 'w') as f:
             for i in range(0, count):
                 line = "%s\t%s\t%s\t%s\t%s" % (

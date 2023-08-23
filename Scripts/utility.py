@@ -110,6 +110,9 @@ def max_gap_seqs(records, max_gaps=0, reference=True):
     
     columns = len(str(records[0].seq))
     drop_indices = set()
+
+    if columns == 0:
+        return []
     
     for i in range(start_index, length):
         gaps = records[i].seq.count("-")
