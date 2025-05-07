@@ -12,7 +12,7 @@ import numpy as np
 
 from utility import write_maf, read_maf, print_maf_alignment, sortRecords, eliminate_consensus_gaps, max_gap_seqs, check_positional_argument
 
-
+ 
 def coordinate_distance(end1, start2):
     return start2 - end1
 
@@ -159,7 +159,7 @@ def merge(parser):
     parser.add_option("-s", "--species-consensus", action="store", type="float", default=0.75, dest="species_consensus", help="Minimal consensus between neighboring blocks for merging (Default: 0.75).")
     parser.add_option("-d", "--max-distance", action="store", default=0, type="int", dest="distance", help="Maximum distance between genomic coordinates of sequences for merging of neighboring blocks (Default: 0).")
     parser.add_option("-l", "--max-length", action="store", default=1000, type="int", dest="length", help="Merged alignment blocks will not be extended past this block length (Default: 1000).")
-    parser.add_option("-g", "--max-gaps", action="store", default=0.9, type="float", dest="max_gaps", help="All sequences with a larger gap fraction than this value will be dropped (Default: 0.9).")
+    parser.add_option("-g", "--max-gaps", action="store", default=0.5, type="float", dest="max_gaps", help="All sequences with a larger gap fraction than this value will be dropped (Default: 0.5).")
     parser.add_option("-m", "--min-seqs", action="store", default=2, type="int", dest="min_seqs", help="No merging will happen, if the blocks share this few or less sequences (Default: 2).")
     options, args = parser.parse_args()
     args = args[1:]
@@ -179,7 +179,7 @@ def merge(parser):
             records = max_gap_seqs(records, options.max_gaps, options.reference)
             merged_blocks_n.append(local_merges)
             if options.out_file == "":
-                print_maf_alignment(records)
+                print_maf_alignment(records, min_seqs=options.min_seqs)
             else:
                 merged_alignments.append(records)
             break
@@ -199,10 +199,10 @@ def merge(parser):
             local_merges = 1
             block1 = block2
             if options.out_file == "":
-                print_maf_alignment(records)
+                print_maf_alignment(records, min_seqs=options.min_seqs)
             else:
                 merged_alignments.append(records)
 
     if options.out_file != "":
         write_maf(merged_alignments, options.out_file)
-     
+    

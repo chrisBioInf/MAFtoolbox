@@ -36,7 +36,7 @@ def read_fasta(handle):
     handle = SeqIO.parse(handle, format='fasta')
 
 
-def write_maf(records, filename):
+def write_maf(records: list, filename: str) -> None:
     alignment = [record for record in records if record]
     
     if len(alignment) == 0:
@@ -45,24 +45,24 @@ def write_maf(records, filename):
         AlignIO.write(alignment, open(filename, 'w'), format='maf')
 
 
-def load_bed(filename):
+def load_bed(filename: str) -> pd.DataFrame:
     df = pd.read_csv(filename, sep="\t", header=None, names=bed_columns)
     return df
 
 
-def load_gtf(filename):
+def load_gtf(filename: str) -> pd.DataFrame:
     df = pd.read_csv(filename, sep="\t", header=None, names=gtf_columns)
     return df
 
 
-def check_positional_argument(args):
+def check_positional_argument(args: list):
     if len(args) >= 1:
         return open(args[-1], 'r')
     else:
         return sys.stdin
 
 
-def sortRecords(records):
+def sortRecords(records: list) -> None:
     n = len(records)
     if n < 3:
         return
@@ -78,7 +78,7 @@ def sortRecords(records):
             return
         
         
-def eliminate_consensus_gaps(records):
+def eliminate_consensus_gaps(records: list) -> list:
     ungapped_seqs = []
     seq_matrix = np.array([list(record.seq) for record in records])
     for i in range(0, len(records)):
@@ -99,14 +99,14 @@ def eliminate_consensus_gaps(records):
     return records
 
 
-def max_gap_seqs(records, max_gaps=0, reference=True):
+def max_gap_seqs(records: list, max_gaps: int =0, reference: bool =True) -> list:
     start_index = 0
     if reference == True:
         start_index = 1
     length = len(records)
     
     if start_index >= length:
-        return 
+        return []
     
     columns = len(str(records[0].seq))
     drop_indices = set()
@@ -123,22 +123,36 @@ def max_gap_seqs(records, max_gaps=0, reference=True):
     return [records[n] for n in range(0, length) if n not in drop_indices]
 
 
-def print_maf_alignment(alignment):
-    if not alignment:
-        return
-    try:
-        print("\na")
-        for record in alignment:
-            print("s %s \t%s \t%s \t%s \t%s \t%s" % (record.id, 
+def print_record(record: SeqIO.SeqRecord) -> None:
+    print("s %s \t%s \t%s \t%s \t%s \t%s" % (record.id, 
                                                      record.annotations["start"], 
                                                      record.annotations["size"], 
                                                      strand_dict.get(record.annotations["strand"]), 
                                                      record.annotations["srcSize"],
                                                      record.seq))
+
+
+def print_maf_alignment(alignment: list, min_seqs: int =1) -> None:
+    if not alignment:
+        return
+    if len(alignment) < min_seqs:
+        return
+    try:
+        print("\na")
+        if len(alignment) == 1:
+            record = alignment[0]
+            record.seq = str(record.seq).replace("-", "")
+            print_record(record)
+            return
+
+        for record in alignment:
+            print_record(record)
+            
     except BrokenPipeError:
         print("Broken pipe. Maybe check output of previous function?")
-        
-        
-def alignments_to_stdout(alignments):
+    
+    
+def alignments_to_stdout(alignments: list) -> None:
     for alignment in alignments:
         print_maf_alignment(alignment)
+    
